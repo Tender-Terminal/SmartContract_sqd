@@ -239,12 +239,6 @@
         "internalType": "string",
         "name": "nftURI",
         "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "loyaltyFee",
-        "type": "uint256"
       }
     ],
     "name": "minted",
@@ -489,13 +483,13 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "_loyaltyFee",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "_USDC",
+        "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_USDC",
+        "name": "_marketplace",
         "type": "address"
       }
     ],
@@ -548,16 +542,24 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "marketplace",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
         "name": "_nftURI",
         "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_loyaltyFee",
-        "type": "uint256"
       }
     ],
     "name": "mint",
@@ -713,6 +715,24 @@
       }
     ],
     "name": "setApprovalForAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_loyaltyFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "setLoyaltyFee",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

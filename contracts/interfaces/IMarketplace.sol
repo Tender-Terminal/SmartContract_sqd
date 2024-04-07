@@ -37,4 +37,6 @@ interface IMarketplace {
     function cancelListing(address _nftContractAddress, uint256 _nftId) external;
     
     function getDutchAuctionPrice(uint256 id) external view returns (uint256);
+
+    function setPercentForLoyaltyFee(uint256 _percentForLoyaltyFee) external ;
 }

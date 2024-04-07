@@ -18,9 +18,9 @@ interface ICreatorGroup {
     
     function alarmSoldOut(address contractAddress, uint256 nftId, uint256 price) external;
     
-    function mintNew(string memory _nftURI, string memory _name, string memory _symbol, string memory _description, uint256 _loyaltyFee) external;
+    function mintNew(string memory _nftURI, string memory _name, string memory _symbol, string memory _description) external;
     
-    function mint(string memory _nftURI, address _targetNFT, uint256 _loyaltyFee) external;
+    function mint(string memory _nftURI, address _targetNFT) external;
     
     function burn(uint256 id) external;
     
@@ -63,4 +63,6 @@ interface ICreatorGroup {
     function addMember(address _newMember, uint256 _role) external ;
 
     function removeMember(address _removeMember) external ;
+
+    function alarmLoyaltyFeeReceived(uint256 nftId, uint256 price) external ;
 }

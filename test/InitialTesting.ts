@@ -18,8 +18,8 @@ let buyer1: any ;
 let buyer2: any ;
 let agency1: any ;
 const percentForSeller:number = 85;
-const mintFee:number = 50;
-const burnFee:number = 50;
+const mintFee:number = 0;
+const burnFee:number = 0;
 describe("Create Initial Contracts of all types", function () {
      
     it("get accounts", async function () {
@@ -85,7 +85,6 @@ describe("test creating CreatorGroup contracts and mint & burn NFTs", async func
 
     it("set Director First", async function(){
         await creatorGroup.connect(user1).submitDirectorSettingTransaction(user1) ;
-        
         await creatorGroup.connect(user1).confirmDirectorSettingTransaction(0, true) ;
         await creatorGroup.connect(user2).confirmDirectorSettingTransaction(0, true) ;
         await creatorGroup.connect(user2).excuteDirectorSettingTransaction(0) ;
@@ -95,7 +94,7 @@ describe("test creating CreatorGroup contracts and mint & burn NFTs", async func
     })
 
     it("mint First NFT in the CreatorGroup", async function(){
-        await creatorGroup.connect(user1).mintNew("ipfs://firstToken", "Nature", "DDD", "Oh my god, it's beautiful", 50) ;
+        await creatorGroup.connect(user1).mintNew("ipfs://firstToken", "Nature", "DDD", "Oh my god, it's beautiful") ;
         const nftId = await creatorGroup.getNftOfId(0) ;
         console.log("\tNFT id\t", nftId);
         firstNFTAddress = await creatorGroup.getNftAddress(0) ;
@@ -115,7 +114,7 @@ describe("test creating CreatorGroup contracts and mint & burn NFTs", async func
     })
 
     it("mint second NFT to the Nature NFT Collection", async function(){
-        await creatorGroup.connect(user1).mint("ipfs://secondToken",firstNFTAddress, 50) ;
+        await creatorGroup.connect(user1).mint("ipfs://secondToken",firstNFTAddress) ;
     })
 
     it("check nft values in nft contract", async function(){
@@ -125,7 +124,7 @@ describe("test creating CreatorGroup contracts and mint & burn NFTs", async func
     })
 
     it("mint third NFT to the Nature NFT Collection", async function(){
-        await creatorGroup.connect(user1).mint("ipfs://thirdToken",firstNFTAddress, 50) ;
+        await creatorGroup.connect(user1).mint("ipfs://thirdToken",firstNFTAddress) ;
     })
 
     it("check nft values in nft contract", async function(){
@@ -239,8 +238,12 @@ describe("Check how to distributed revenues", async function(){
     it("check the balance of each address", async function(){
         const user1_balance = await creatorGroup.balance(user1) ;
         console.log("\tuser1_balance: " + user1_balance) ;
+        const loyaltyFee_balance_user1 = await creatorGroup.loyaltyFeeBalance(user1) ;
+        console.log("\tloyaltyFee_balance_user1: " + loyaltyFee_balance_user1) ;
         const user2_balance = await creatorGroup.balance(user2) ;
         console.log("\tuser2_balance: " + user2_balance) ;
+        const loyaltyFee_balance_user2 = await creatorGroup.loyaltyFeeBalance(user2) ;
+        console.log("\tloyaltyFee_balance_user2: " + loyaltyFee_balance_user2) ;
     })
     it("check sold value and each earning", async function(){
         const count = await creatorGroup.getSoldNumber() ;
@@ -262,17 +265,11 @@ describe("Check how to distributed revenues", async function(){
                 console.log("\tvalue: " + value) ;
             }
         }
-        const balance_user1 = await creatorGroup.balance(user1) ;
-        const balance_user2 = await creatorGroup.balance(user2) ;
-        const balance_agency1 = await creatorGroup.balance(agency1) ;
-        console.log("\tbalance_user1: " + balance_user1);
-        console.log("\tbalance_user2: " + balance_user2);
-        console.log("\tbalance_agency1: " + balance_agency1);
     })
 })
 describe("check cancel listing", async function () {
     it("mint fourth NFT to the Nature NFT Collection", async function () {
-        await creatorGroup.connect(user1).mint("ipfs://fourthToken", firstNFTAddress, 50);
+        await creatorGroup.connect(user1).mint("ipfs://fourthToken", firstNFTAddress);
     })
     it("list to English Auction", async function () {
         await creatorGroup.connect(user1).listToEnglishAuction(3, 200, 300);
@@ -293,11 +290,15 @@ describe("check cancel listing", async function () {
 
 })
 describe("In creatorGroup contract, withdraw all balances", async function(){
-    it("check current balance", async function(){
-        const user1_balance = await USDC_Contract.balanceOf(user1) ;
-        console.log("\tUSDC balance of user1\t", user1_balance);
-        const user2_balance = await USDC_Contract.balanceOf(user2) ;
-        console.log("\tUSDC balance of user2\t", user2_balance);
+    it("check the balance of each address", async function(){
+        const user1_balance = await creatorGroup.balance(user1) ;
+        console.log("\tuser1_balance: " + user1_balance) ;
+        const loyaltyFee_balance_user1 = await creatorGroup.loyaltyFeeBalance(user1) ;
+        console.log("\tloyaltyFee_balance_user1: " + loyaltyFee_balance_user1) ;
+        const user2_balance = await creatorGroup.balance(user2) ;
+        console.log("\tuser2_balance: " + user2_balance) ;
+        const loyaltyFee_balance_user2 = await creatorGroup.loyaltyFeeBalance(user2) ;
+        console.log("\tloyaltyFee_balance_user2: " + loyaltyFee_balance_user2) ;
         const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
         console.log("\tUSDC balance of agency1\t", agency1_balance);
     })
@@ -306,19 +307,21 @@ describe("In creatorGroup contract, withdraw all balances", async function(){
         await creatorGroup.connect(user2).withdraw() ;
         await creatorGroup.connect(agency1).withdraw() ;
     })
-    it("check balance after withdraw", async function(){
-        const user1_balance = await USDC_Contract.balanceOf(user1) ;
-        console.log("\tUSDC balance of user1\t", user1_balance);
-        const user2_balance = await USDC_Contract.balanceOf(user2) ;
-        console.log("\tUSDC balance of user2\t", user2_balance);
+    it("check the balance of each address", async function(){
+        const user1_balance = await creatorGroup.balance(user1) ;
+        console.log("\tuser1_balance: " + user1_balance) ;
+        const loyaltyFee_balance_user1 = await creatorGroup.loyaltyFeeBalance(user1) ;
+        console.log("\tloyaltyFee_balance_user1: " + loyaltyFee_balance_user1) ;
+        const user2_balance = await creatorGroup.balance(user2) ;
+        console.log("\tuser2_balance: " + user2_balance) ;
+        const loyaltyFee_balance_user2 = await creatorGroup.loyaltyFeeBalance(user2) ;
+        console.log("\tloyaltyFee_balance_user2: " + loyaltyFee_balance_user2) ;
         const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
         console.log("\tUSDC balance of agency1\t", agency1_balance);
-
     })
     it("check balance of CreatorGroup Contract", async function(){
         const group_balance = await USDC_Contract.balanceOf(group_address) ;
         console.log("\tUSDC balance of group\t", group_balance);
-        console.log("\tThese values are made for loyalty fee of 3 sold NFTs");
     })
 })
 describe("withdraw all of balances in Factory and Marketplace Contract from Development Team", async function(){
@@ -347,7 +350,7 @@ describe("add member to the group processing happen", async function(){
         await creatorGroup.connect(user1).endEnglishAuction(1) ;
     })
     it("mint fifth nft", async function(){
-        await creatorGroup.connect(user1).mint("ipfs://fifthToken",firstNFTAddress, 50) ;
+        await creatorGroup.connect(user1).mint("ipfs://fifthToken",firstNFTAddress) ;
     })
     it("lits fifth nft to the Dutch Auction", async function(){
         await creatorGroup.connect(user1).listToDutchAuction(4, 1000, 100, 28800) ;
@@ -371,10 +374,14 @@ describe("add member to the group processing happen", async function(){
     it("check the balance of each address", async function(){
         const user1_balance = await creatorGroup.balance(user1) ;
         console.log("\tuser1_balance: " + user1_balance) ;
+        const loyaltyFee_balance_user1 = await creatorGroup.loyaltyFeeBalance(user1) ;
+        console.log("\tloyaltyFee_balance_user1: " + loyaltyFee_balance_user1) ;
         const user2_balance = await creatorGroup.balance(user2) ;
         console.log("\tuser2_balance: " + user2_balance) ;
-        const user3_balance = await creatorGroup.balance(user3) ;
-        console.log("\tuser3_balance: " + user3_balance) ;
+        const loyaltyFee_balance_user2 = await creatorGroup.loyaltyFeeBalance(user2) ;
+        console.log("\tloyaltyFee_balance_user2: " + loyaltyFee_balance_user2) ;
+        const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
+        console.log("\tUSDC balance of agency1\t", agency1_balance);
     })
     it("withdraw from Marketplace", async function(){
         await creatorGroup.connect(user1).withdrawFromMarketplace() ;
@@ -399,14 +406,20 @@ describe("add member to the group processing happen", async function(){
                 const value = await creatorGroup.getRevenueDistribution(member, each) ;
                 console.log("\tvalue: " + value) ;
             }
-        }
-        const balance_user1 = await creatorGroup.balance(user1) ;
-        const balance_user2 = await creatorGroup.balance(user2) ;
+        }       
+    })
+    it("check the balance of each address", async function(){
+        const user1_balance = await creatorGroup.balance(user1) ;
+        console.log("\tuser1_balance: " + user1_balance) ;
+        const loyaltyFee_balance_user1 = await creatorGroup.loyaltyFeeBalance(user1) ;
+        console.log("\tloyaltyFee_balance_user1: " + loyaltyFee_balance_user1) ;
+        const user2_balance = await creatorGroup.balance(user2) ;
+        console.log("\tuser2_balance: " + user2_balance) ;
+        const loyaltyFee_balance_user2 = await creatorGroup.loyaltyFeeBalance(user2) ;
+        console.log("\tloyaltyFee_balance_user2: " + loyaltyFee_balance_user2) ;
+        const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
+        console.log("\tUSDC balance of agency1\t", agency1_balance);
         const balance_user3 = await creatorGroup.balance(user3) ;
-        const balance_agency1 = await creatorGroup.balance(agency1) ;
-        console.log("\tbalance_user1: " + balance_user1);
-        console.log("\tbalance_user2: " + balance_user2);
         console.log("\tbalance_user3: " + balance_user3);
-        console.log("\tbalance_agency1: " + balance_agency1);
     })
 })

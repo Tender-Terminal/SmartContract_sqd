@@ -197,6 +197,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "LoyaltyFeeReceived",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "uint256",
         "name": "nftId",
@@ -431,6 +450,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "nftId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "alarmLoyaltyFeeReceived",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1023,6 +1060,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "loyaltyFeeBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "marketplace",
     "outputs": [
@@ -1084,11 +1140,6 @@
         "internalType": "address",
         "name": "_targetNFT",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_loyaltyFee",
-        "type": "uint256"
       }
     ],
     "name": "mint",
@@ -1130,11 +1181,6 @@
         "internalType": "string",
         "name": "_description",
         "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_loyaltyFee",
-        "type": "uint256"
       }
     ],
     "name": "mintNew",

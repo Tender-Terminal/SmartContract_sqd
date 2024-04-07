@@ -12,6 +12,7 @@ contract Marketplace {
     address public developmentTeam; // Address of the development team
     uint256 public balanceOfDevelopmentTeam ; // Balance of the development team
     uint256 public percentForSeller; // Percentage of the Seller
+    uint256 public percentForLoyaltyFee ; // Percentage of the loyalty fee
     mapping(address => uint256) balanceOfUser ; // Balance of the user
     address public USDC ; // Address of the USDC
     mapping(address => uint256) balanceOfSeller ; // Balance of the seller
@@ -90,6 +91,7 @@ contract Marketplace {
     event newBidToOfferingSale(uint256 id, address from, uint256 sendingValue);
     event newWithdrawFromOfferingSale(uint256 id, address from, uint256 amount) ;
     event canceledListing(uint256 id, address from) ;
+    event percentForLoyaltyFeeSet(uint256 value) ;
 
     // Constructor to set the development team address
     constructor(address _developmentTeam, uint256 _percentForSeller, address _USDC) {
@@ -98,6 +100,7 @@ contract Marketplace {
         percentForSeller = _percentForSeller;
         balanceOfDevelopmentTeam = 0 ;
         USDC = _USDC ;
+        percentForLoyaltyFee = 5 ;
     }
 
     // Function to get the balance of a specific user
@@ -130,6 +133,11 @@ contract Marketplace {
     function setPercentForSeller(uint256 _percentForSeller) public onlyOwner {
         percentForSeller = _percentForSeller;
         emit percentForSellerSet(percentForSeller);
+    }
+
+    function setPercentForLoyaltyFee(uint256 _percentForLoyaltyFee) public onlyOwner {
+        percentForLoyaltyFee = _percentForLoyaltyFee ;
+        emit percentForLoyaltyFeeSet(percentForLoyaltyFee);
     }
 
     // Function to withdraw funds from the contract (only callable by the development team)
@@ -244,7 +252,9 @@ contract Marketplace {
         uint256 price = englishAuctions[id].currentPrice;  
         address currentOwner = listedNFTs[listedId].currentOwner;
         require(msg.sender == currentOwner, "Only current Owner is allowed to end the auction.");
-        uint256 loyaltyFee = IContentNFT(contractAddress).getLoyaltyFee(nftId);
+        uint256 loyaltyFee ;
+        loyaltyFee = price * percentForLoyaltyFee / 100;
+        IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
         IERC20(USDC).approve(address(contractAddress), loyaltyFee) ;
         IContentNFT(contractAddress).transferFrom(currentOwner, englishAuctions[id].currentWinner, nftId);
         recordRevenue(currentOwner, price - loyaltyFee, contractAddress, nftId) ;
@@ -267,6 +277,10 @@ contract Marketplace {
         require(sendingValue == price, "Not exact fee");
         IERC20(USDC).transferFrom(msg.sender, address(this), sendingValue) ;
         uint256 loyaltyFee = IContentNFT(contractAddress).getLoyaltyFee(nftId);
+        if(loyaltyFee == 0){
+            loyaltyFee = price * percentForLoyaltyFee / 100;
+            IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
+        }
         IERC20(USDC).approve(contractAddress, loyaltyFee) ;
         IContentNFT(contractAddress).transferFrom(currentOwner, msg.sender, nftId);
         recordRevenue(currentOwner, price - loyaltyFee, contractAddress, nftId) ;
@@ -325,6 +339,10 @@ contract Marketplace {
         uint256 nftId = listedNFTs[listedId].nftId;
         require(checkOwnerOfNFT(contractAddress, nftId) == true, "only the nft owner can call this function");
         uint256 loyaltyFee = IContentNFT(contractAddress).getLoyaltyFee(nftId);
+        if(loyaltyFee == 0){
+            loyaltyFee = price * percentForLoyaltyFee / 100;
+            IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
+        }
         IERC20(USDC).approve(contractAddress, loyaltyFee) ;
         IContentNFT(contractAddress).transferFrom(msg.sender, buyer, nftId);
         recordRevenue(msg.sender, price - loyaltyFee, contractAddress, nftId) ;

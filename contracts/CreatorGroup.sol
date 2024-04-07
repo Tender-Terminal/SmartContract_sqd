@@ -27,6 +27,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     address public factory; // Address of the factory contract
     address public marketplace; // Address of the marketplace contract
     mapping(address => uint256) public balance; // Mapping to store balances of members
+    mapping(address => uint256) public loyaltyFeeBalance ; // Mapping to store loyalty fee balances of members
     mapping(address => bool) public isOwner; // Mapping to track ownership status of addresses
     mapping(address => bool) public isAgency; // Flag indicating if an address is an agency
     uint256 public numConfirmationRequired; // Number of confirmations required for transactions
@@ -103,6 +104,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     event OfferingSaleTransactionExecuted(uint256 indexed index) ;
     event ConfirmationRequiredNumberSet(uint256 indexed confirmNumber);
     event withdrawHappened(address indexed from, uint256 balanceToWithdraw) ;
+    event LoyaltyFeeReceived(uint256 id, uint256 price) ;
 
     // Function to initialize the CreatorGroup contract with member addresses and other parameters
     function initialize(string memory _name, string memory _description, address[] memory _members, 
@@ -179,6 +181,22 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         emit TeamScoreSet(value);
     }
 
+    function alarmLoyaltyFeeReceived(uint256 nftId, uint256 price) public {
+        uint256 id = getNFTId[msg.sender][nftId] ;
+        uint256 count = 0 ;
+        for(uint256 i = 0 ; i < members.length ; i ++){
+            if(memberFromNFTId[members[i]] <= id) {
+                count ++ ;
+            }
+        }
+        for(uint256 i = 0 ; i < members.length ; i ++){
+            if(memberFromNFTId[members[i]] <= id) {
+                loyaltyFeeBalance[members[i]] += price / count ;
+            }
+        }
+        emit LoyaltyFeeReceived(id, price);
+    }
+
     // Function to handle a sold-out event
     function alarmSoldOut(address contractAddress, uint256 nftId, uint256 price) onlyMarketplace public {
         uint256 id = getNFTId[contractAddress][nftId] ;
@@ -186,9 +204,9 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to mint a new NFT
-    function mintNew(string memory _nftURI, string memory _name, string memory _symbol, string memory _description, uint256 _loyaltyFee) onlyDirector public{
+    function mintNew(string memory _nftURI, string memory _name, string memory _symbol, string memory _description) onlyDirector public{
         IERC20(USDC).approve(factory, mintFee);
-        address nftAddress = IFactory(factory).mintNew(_nftURI, _name, _symbol, _description, _loyaltyFee);
+        address nftAddress = IFactory(factory).mintNew(_nftURI, _name, _symbol, _description);
         nftAddressArr[numberOfNFT] = nftAddress;
         nftIdArr[numberOfNFT] = 1 ;
         getNFTId[nftAddress][1] = numberOfNFT ;
@@ -197,9 +215,9 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to mint an existing NFT Collection
-    function mint(string memory _nftURI, address _targetNFT, uint256 _loyaltyFee) onlyDirector public{
+    function mint(string memory _nftURI, address _targetNFT) onlyDirector public{
         IERC20(USDC).approve(_targetNFT, mintFee);
-        nftIdArr[numberOfNFT] = IContentNFT(_targetNFT).mint(_nftURI, _loyaltyFee);
+        nftIdArr[numberOfNFT] = IContentNFT(_targetNFT).mint(_nftURI);
         nftAddressArr[numberOfNFT] = _targetNFT;
         getNFTId[_targetNFT][nftIdArr[numberOfNFT]] = numberOfNFT ;
         numberOfNFT ++ ;
@@ -420,9 +438,10 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Function to withdraw funds from the contract
     function withdraw() public onlyMembers{
-        uint256 balanceToWithdraw = balance[msg.sender];
+        uint256 balanceToWithdraw = balance[msg.sender] + loyaltyFeeBalance[msg.sender] ;
         require(balanceToWithdraw > 0, "No balance to withdraw");
         balance[msg.sender] = 0;
+        loyaltyFeeBalance[msg.sender] = 0;
         IERC20(USDC).approve(address(this), balanceToWithdraw);
         IERC20(USDC).transferFrom(address(this), msg.sender, balanceToWithdraw);
         emit withdrawHappened(msg.sender, balanceToWithdraw) ;

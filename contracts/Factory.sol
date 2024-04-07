@@ -60,10 +60,10 @@ contract Factory {
     }
 
     // Function to mint a new NFT
-    function mintNew(string memory _nftURI, string memory _name, string memory _symbol, string memory _description, uint256 _loyaltyFee) public returns(address) {
+    function mintNew(string memory _nftURI, string memory _name, string memory _symbol, string memory _description) public returns(address) {
         IERC20(USDC).transferFrom(msg.sender, address(this), mintFee);
         address newDeployedAddress = Clones.clone(implementContent);
-        IContentNFT(newDeployedAddress).initialize(_name, _symbol, _description, _nftURI, msg.sender, mintFee, burnFee, _loyaltyFee, USDC);
+        IContentNFT(newDeployedAddress).initialize(_name, _symbol, _description, _nftURI, msg.sender, mintFee, burnFee, USDC, marketplace);
         emit NFTMinted(msg.sender, newDeployedAddress);
         return newDeployedAddress ;
     }
