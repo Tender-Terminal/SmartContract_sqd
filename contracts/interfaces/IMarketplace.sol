@@ -24,7 +24,7 @@ interface IMarketplace {
     
     function withdrawFromEnglishAuction(uint256 id) external;
     
-    function endEnglishAuction(uint256 id) external;
+    function endEnglishAuction(address _contractAddress, uint256 _nftId) external;
     
     function buyDutchAuction(uint256 id, uint256 sendingValue) external ;
     

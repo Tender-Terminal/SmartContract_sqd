@@ -241,7 +241,16 @@ contract Marketplace {
     }
     
     // Function to end an English auction
-    function endEnglishAuction(uint256 id) public{
+    function endEnglishAuction(address _nftAddress, uint256 _nftId) public{
+        uint256 id ;
+        bool flg = false ;
+        for(uint256 i = 0 ; i < englishAuctions.length ; i ++){
+            uint256 tmp_Id = englishAuction_listedNumber[i] ;
+            if(listedNFTs[tmp_Id].nftContractAddress == _nftAddress &&  listedNFTs[tmp_Id].nftId == _nftId) {
+                id = i ; flg = true ; break ;
+            }
+        }
+        require(flg, "Wrong nft") ;
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(englishAuctions.length > id, "Not listed in the english auction list.");
         uint256 listedId = englishAuction_listedNumber[id];
@@ -255,6 +264,7 @@ contract Marketplace {
         uint256 loyaltyFee ;
         loyaltyFee = price * percentForLoyaltyFee / 100;
         IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
+        if(IContentNFT(contractAddress).creators(nftId) == currentOwner) loyaltyFee = 0 ;
         IERC20(USDC).approve(address(contractAddress), loyaltyFee) ;
         IContentNFT(contractAddress).transferFrom(currentOwner, englishAuctions[id].currentWinner, nftId);
         recordRevenue(currentOwner, price - loyaltyFee, contractAddress, nftId) ;
@@ -276,12 +286,11 @@ contract Marketplace {
         uint256 price = getDutchAuctionPrice(id);
         require(sendingValue == price, "Not exact fee");
         IERC20(USDC).transferFrom(msg.sender, address(this), sendingValue) ;
-        uint256 loyaltyFee = IContentNFT(contractAddress).getLoyaltyFee(nftId);
-        if(loyaltyFee == 0){
-            loyaltyFee = price * percentForLoyaltyFee / 100;
-            IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
-        }
-        IERC20(USDC).approve(contractAddress, loyaltyFee) ;
+        uint256 loyaltyFee ;
+        loyaltyFee = price * percentForLoyaltyFee / 100;
+        IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
+        if(IContentNFT(contractAddress).creators(nftId) == currentOwner) loyaltyFee = 0 ;
+        IERC20(USDC).approve(address(contractAddress), loyaltyFee) ;
         IContentNFT(contractAddress).transferFrom(currentOwner, msg.sender, nftId);
         recordRevenue(currentOwner, price - loyaltyFee, contractAddress, nftId) ;
         listedNFTs[listedId].endState = true;
@@ -338,12 +347,11 @@ contract Marketplace {
         address contractAddress = listedNFTs[listedId].nftContractAddress;
         uint256 nftId = listedNFTs[listedId].nftId;
         require(checkOwnerOfNFT(contractAddress, nftId) == true, "only the nft owner can call this function");
-        uint256 loyaltyFee = IContentNFT(contractAddress).getLoyaltyFee(nftId);
-        if(loyaltyFee == 0){
-            loyaltyFee = price * percentForLoyaltyFee / 100;
-            IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
-        }
-        IERC20(USDC).approve(contractAddress, loyaltyFee) ;
+        uint256 loyaltyFee ;
+        loyaltyFee = price * percentForLoyaltyFee / 100;
+        IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
+        if(IContentNFT(contractAddress).creators(nftId) == msg.sender) loyaltyFee = 0 ;
+        IERC20(USDC).approve(address(contractAddress), loyaltyFee) ;
         IContentNFT(contractAddress).transferFrom(msg.sender, buyer, nftId);
         recordRevenue(msg.sender, price - loyaltyFee, contractAddress, nftId) ;
         listedNFTs[listedId].endState = true;

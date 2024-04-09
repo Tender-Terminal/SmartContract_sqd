@@ -50,10 +50,10 @@ contract Factory {
     }
 
     // Function to create a new group
-    function createGroup(string memory name, string memory description, address[] memory owners, uint256[] memory roles, uint256 numConfirmationRequired) external {
+    function createGroup(string memory name, string memory description, address[] memory owners, uint256 numConfirmationRequired) external {
         require(owners.length > 0, "At least one owner is required");
         address newDeployedAddress = Clones.clone(implementGroup);
-        ICreatorGroup(newDeployedAddress).initialize(name, description, owners, roles, numConfirmationRequired, marketplace, mintFee, burnFee, USDC);
+        ICreatorGroup(newDeployedAddress).initialize(name, description, owners, numConfirmationRequired, marketplace, mintFee, burnFee, USDC);
         Creators.push(newDeployedAddress);
         numberOfCreators = Creators.length;
         emit GroupCreated(msg.sender, name, description);

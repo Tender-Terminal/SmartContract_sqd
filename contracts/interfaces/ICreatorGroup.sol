@@ -7,7 +7,7 @@ interface ICreatorGroup {
         uint256 price ;
         bool distributeState ;
     }
-    function initialize(string memory _name, string memory _description, address[] memory _members, uint256[] memory _roles, 
+    function initialize(string memory _name, string memory _description, address[] memory _members,  
         uint256 _numConfirmationRequired, address _marketplace, uint256 _mintFee, uint256 _burnFee, address _USDC) external;
     
     function addAgency(address _agency) external;
@@ -60,9 +60,15 @@ interface ICreatorGroup {
 
     function withdraw() external  ;
     
-    function addMember(address _newMember, uint256 _role) external ;
+    function addMember(address _newMember) external ;
 
     function removeMember(address _removeMember) external ;
 
     function alarmLoyaltyFeeReceived(uint256 nftId, uint256 price) external ;
+
+    function getNumberOfCandidateTransaction() external view returns(uint256) ;
+
+    function getConfirmNumberOfOfferingSaleTransaction(uint256 index) external view returns(uint256) ;
+
+    function getConfirmNumberOfDirectorSettingTransaction(uint256 index) external view returns(uint256) ;
 }

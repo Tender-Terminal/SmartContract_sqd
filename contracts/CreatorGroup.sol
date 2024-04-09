@@ -20,14 +20,12 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     uint256 public burnFee; // Fee for burning NFTs
     uint256 public numberOfMembers; // Number of members in the group
     address[] public members; // Array to store member addresses
-    mapping(address => uint256) public roles; // Array to store members' roles
     mapping(address => address) public agency; // Array to store agency members
     mapping(address => uint256) public agencyPercentForRevenue; // Array to store agency percent for Revenue
     mapping(address => bool) public isHavingAgency; // Flag indicating if a member has an agency
     address public factory; // Address of the factory contract
     address public marketplace; // Address of the marketplace contract
     mapping(address => uint256) public balance; // Mapping to store balances of members
-    mapping(address => uint256) public loyaltyFeeBalance ; // Mapping to store loyalty fee balances of members
     mapping(address => bool) public isOwner; // Mapping to track ownership status of addresses
     mapping(address => bool) public isAgency; // Flag indicating if an address is an agency
     uint256 public numConfirmationRequired; // Number of confirmations required for transactions
@@ -51,7 +49,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         address candidate;
         bool endState;
     }
-    transaction_candidate[] transactions_candidate; // Array of transaction candidates
+    transaction_candidate[] public transactions_candidate; // Array of transaction candidates
     
     mapping(address => mapping(uint256 => bool)) public confirmTransaction_Candidate; // Mapping for confirm transaction
 
@@ -63,12 +61,21 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 price;
         bool endState;
     }
-    transaction_offering[] transactions_offering; // Array of  offering transaction
+    transaction_offering[] public transactions_offering; // Array of  offering transaction
     
     mapping(address => mapping(uint256 => bool)) public confirmTransaction_Offering; // Mapping for offering transaction confirmed state
 
+
+    struct record_member{
+        address _member ;
+        uint256 _percent ;
+        uint256 _sum ;
+    }
+    mapping(uint256 => record_member[]) public Recording ;
+
+
     // Modifier to restrict access to only director
-    modifier onlyDirector() {
+    modifier onlyDirector(){
         require(msg.sender == director, "Only delegated member can call this function");
         _;
     }
@@ -108,7 +115,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Function to initialize the CreatorGroup contract with member addresses and other parameters
     function initialize(string memory _name, string memory _description, address[] memory _members, 
-        uint256[] memory _roles, uint256 _numConfirmationRequired, address _marketplace, uint256 _mintFee, uint256 _burnFee, address _USDC) public initializer {
+        uint256 _numConfirmationRequired, address _marketplace, uint256 _mintFee, uint256 _burnFee, address _USDC) public initializer {
         name = _name;
         description = _description;
         for(uint256 i = 0; i < _members.length; i++){
@@ -116,16 +123,13 @@ contract CreatorGroup is Initializable, ICreatorGroup {
             memberFromNFTId[_members[i]] = 0;
             isOwner[_members[i]] = true;
         }
-        for(uint256 i = 0; i < _roles.length; i++){
-            roles[_members[i]] = _roles[i];
-        }
         numberOfMembers = _members.length;
         numConfirmationRequired = _numConfirmationRequired;
         marketplace = _marketplace;
         mintFee = _mintFee;
         burnFee = _burnFee;
         factory = msg.sender;
-        director = msg.sender;
+        director = members[0];
         numberOfNFT = 0 ;
         currentDistributeNumber = 0 ;
         teamScore = 20 ;
@@ -133,9 +137,8 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to add a new member to the CreatorGroup
-    function addMember(address _newMember, uint256 _role) onlyDirector public{
+    function addMember(address _newMember) onlyDirector public{
         members.push(_newMember);
-        roles[_newMember] = _role;
         isOwner[_newMember] = true;
         memberFromNFTId[_newMember] = numberOfNFT ;
         numberOfMembers ++ ;
@@ -144,7 +147,6 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     // Function to remove a member from the CreatorGroup
     function removeMember(address _removeMember) onlyDirector public{
         require(isOwner[_removeMember] == true, "It's not a member!") ;
-        delete roles[_removeMember];
         delete isOwner[_removeMember];
         delete memberFromNFTId[_removeMember] ;
         uint256 id ;
@@ -183,23 +185,24 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     function alarmLoyaltyFeeReceived(uint256 nftId, uint256 price) public {
         uint256 id = getNFTId[msg.sender][nftId] ;
-        uint256 count = 0 ;
-        for(uint256 i = 0 ; i < members.length ; i ++){
-            if(memberFromNFTId[members[i]] <= id) {
-                count ++ ;
-            }
-        }
-        for(uint256 i = 0 ; i < members.length ; i ++){
-            if(memberFromNFTId[members[i]] <= id) {
-                loyaltyFeeBalance[members[i]] += price / count ;
-            }
-        }
+        eachDistribution(id, price) ;
         emit LoyaltyFeeReceived(id, price);
     }
 
     // Function to handle a sold-out event
     function alarmSoldOut(address contractAddress, uint256 nftId, uint256 price) onlyMarketplace public {
         uint256 id = getNFTId[contractAddress][nftId] ;
+        record_member[] memory temp = Recording[id] ;
+        uint256 sum = 0 ;
+        for(uint256 i = 0 ; i < temp.length ; i ++){
+            uint256 value = IMarketplace(marketplace).getBalanceOfUser(temp[i]._member) ;
+            Recording[id][i]._percent = value ;
+            sum += value ;
+        }
+        for(uint256 i = 0 ; i < temp.length ; i ++){
+            Recording[id][i]._sum = sum ;
+        }
+        console.log("alarmsoldout: id %d", id) ;
         soldInformation.push(soldInfor(id, price, false)) ;
     }
 
@@ -210,6 +213,10 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         nftAddressArr[numberOfNFT] = nftAddress;
         nftIdArr[numberOfNFT] = 1 ;
         getNFTId[nftAddress][1] = numberOfNFT ;
+        for(uint256 i = 0 ; i < members.length ; i ++){
+            record_member memory tmp = record_member(members[i], 0, 0) ;
+            Recording[numberOfNFT].push(tmp) ;
+        }
         numberOfNFT ++ ;
         emit NFTMinted(nftAddress, numberOfNFT - 1);
     }
@@ -220,6 +227,10 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         nftIdArr[numberOfNFT] = IContentNFT(_targetNFT).mint(_nftURI);
         nftAddressArr[numberOfNFT] = _targetNFT;
         getNFTId[_targetNFT][nftIdArr[numberOfNFT]] = numberOfNFT ;
+        for(uint256 i = 0 ; i < members.length ; i ++){
+            record_member memory tmp = record_member(members[i], 0, 0) ;
+            Recording[numberOfNFT].push(tmp) ;
+        }
         numberOfNFT ++ ;
         emit NFTMinted(_targetNFT, numberOfNFT - 1);
     }
@@ -269,23 +280,17 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Function to end an English auction
     function endEnglishAuction(uint256 id) onlyDirector public{
-        IMarketplace(marketplace).endEnglishAuction(id);
+        require(listedState[id] == true, "Not listed!");
+        IMarketplace(marketplace).endEnglishAuction(nftAddressArr[id], nftIdArr[id]);
         emit EnglishAuctionEnded(id) ;
     }
 
     // Function to withdraw funds from the marketplace
     function withdrawFromMarketplace() onlyDirector public{
-        // uint256 currentbalance = IERC20(USDC).balanceOf(address(this)) ;
         IMarketplace(marketplace). withdrawFromSeller();
-        // uint256 value = IERC20(USDC).balanceOf(address(this)) - currentbalance ;
         uint256 startNumber = currentDistributeNumber ;
-        // for(uint256 i = startNumber ; i < soldInformation.length ; i ++){
-        
-        //     value -= soldInformation[i].price ;
-        // }
-        // require(value == 0, "Invalid withdraw!!!") ;
         for(uint256 i = startNumber ; i < soldInformation.length ; i ++){
-            eachDistribution(soldInformation[i]) ;
+            if(!soldInformation[i].distributeState) eachDistribution(soldInformation[i].id, soldInformation[i].price) ;
             soldInformation[i].distributeState = true ;
         }
         currentDistributeNumber = soldInformation.length ;
@@ -293,46 +298,35 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to distribute revenue from sold NFTs
-    function eachDistribution(soldInfor memory Information) internal {
-        uint256 id = Information.id ;
-        uint256 value = Information.price ;
-        bool state = Information.distributeState ;
-        require(state == false, "Already distributed") ;
-        uint256 count = 0 ;
-        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            if(memberFromNFTId[members[i]] <= id) {
-                count ++ ;
-            }
-        }
-        uint256 eachTeamScore = (value * teamScore / 100) / count ;
-        uint256 sum = 0 ;
-        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            if(memberFromNFTId[members[i]] <= id) revenueDistribution[members[i]][id] += eachTeamScore ;
-            if(memberFromNFTId[members[i]] <= id) sum += IMarketplace(marketplace).getBalanceOfUser(members[i]);
-        }
-        value = value - eachTeamScore * count;
-        if(sum == 0){
-            for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-                if(memberFromNFTId[members[i]] <= id) revenueDistribution[members[i]][id] += value / count ;
-            }
-        }
-        else{
-            for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-                if(memberFromNFTId[members[i]] <= id) revenueDistribution[members[i]][id] += (value * IMarketplace(marketplace).getBalanceOfUser(members[i])) / sum  ;
-            }
-        }
-        uint256[] memory _revenues = new uint256[](numberOfMembers) ;
-        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            _revenues[i] = revenueDistribution[members[i]][id] ;
+    function eachDistribution(uint256 id, uint256 value) internal {
 
-            if(isHavingAgency[members[i]] == false) balance[members[i]] += _revenues[i] ;
+        console.log("eachDistribution: id-> %d  value-> %d", id, value) ;
+        uint256 count = Recording[id].length ;
+        uint256 eachTeamScore = (value * teamScore / 100) / count ;
+        value = value - eachTeamScore * count;
+        uint256[] memory _revenues = new uint256[](count) ;
+        for(uint256 i = 0 ; i < count ; i ++){
+            _revenues[i] += eachTeamScore ;
+            if(Recording[id][i]._sum == 0){
+                _revenues[i] += value / count ;
+            }
             else{
-                address _agency = agency[members[i]] ;
-                balance[_agency] += _revenues[i] * agencyPercentForRevenue[_agency] / 100 ;
-                balance[members[i]] += _revenues[i] * (100 - agencyPercentForRevenue[_agency]) / 100 ;
+                _revenues[i] += (value * Recording[id][i]._percent) / Recording[id][i]._sum ;
             }
         }
-        IMarketplace(marketplace).addBalanceOfUser(members, _revenues, nftAddressArr[id], nftIdArr[id]);
+        address[] memory _members = new address[](count) ;
+        for(uint256 i = 0 ; i < count ; i ++){
+            address tmp_address = Recording[id][i]._member ;
+            revenueDistribution[tmp_address][id] += _revenues[i] ;
+            _members[i] = tmp_address ;
+            if(isHavingAgency[tmp_address] == false) balance[tmp_address] += _revenues[i] ;
+            else{
+                address _agency = agency[tmp_address] ;
+                balance[_agency] += _revenues[i] * agencyPercentForRevenue[_agency] / 100 ;
+                balance[tmp_address] += _revenues[i] * (100 - agencyPercentForRevenue[_agency]) / 100 ;
+            }
+        }
+        IMarketplace(marketplace).addBalanceOfUser(_members, _revenues, nftAddressArr[id], nftIdArr[id]);
     }
 
     // Function to cancel the listing of an NFT
@@ -356,18 +350,22 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Function to execute a director setting transaction
     function excuteDirectorSettingTransaction(uint256 index) onlyMembers public{
-        uint256 count = 0 ;
-        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            if(confirmTransaction_Candidate[members[i]][index] == true || confirmTransaction_Candidate[agency[members[i]]][index] == true){
-                count ++ ;
-            }
-        }
+        uint256 count = getConfirmNumberOfDirectorSettingTransaction(index);
         require(count >= numConfirmationRequired, "Not confirmed enough!!!") ;
         director = transactions_candidate[index].candidate ;
         transactions_candidate[index].endState = true ;
         emit DirectorSettingExecuted(director);
     }
 
+    function getConfirmNumberOfDirectorSettingTransaction(uint256 index) public view returns(uint256){
+        uint256 count = 0 ;
+        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
+            if(confirmTransaction_Candidate[members[i]][index] == true || confirmTransaction_Candidate[agency[members[i]]][index] == true){
+                count ++ ;
+            }
+        }
+        return count ;
+    }
     // Function to submit an offering sale transaction
     function submitOfferingSaleTransaction(uint256 _marketId, address _tokenContractAddress, uint256 tokenId, address _buyer, uint256 _price) onlyMarketplace public {
 
@@ -386,12 +384,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Function to execute an offering sale transaction
     function excuteOfferingSaleTransaction(uint256 index) onlyMembers public{
-        uint256 count = 0 ;
-        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            if(confirmTransaction_Offering[members[i]][index] == true || confirmTransaction_Offering[agency[members[i]]][index] == true){
-                count ++ ;
-            }
-        }
+        uint256 count = getConfirmNumberOfOfferingSaleTransaction(index);
         require(count >= numConfirmationRequired, "Not confirmed enough!!!") ;
         transactions_offering[index].endState = true ;
         for(uint256 i = 0 ; i < transactions_offering.length ; i ++){
@@ -402,6 +395,16 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         address buyer = transactions_offering[index].buyer;
         IMarketplace(marketplace).endOfferingSale(transactions_offering[index].marketId, buyer) ;
         emit OfferingSaleTransactionExecuted(index) ;
+    }
+
+    function getConfirmNumberOfOfferingSaleTransaction(uint256 index) public view returns(uint256){
+        uint256 count = 0 ;
+        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
+            if(confirmTransaction_Offering[members[i]][index] == true || confirmTransaction_Offering[agency[members[i]]][index] == true){
+                count ++ ;
+            }
+        }
+        return count ;
     }
 
     // Function to set the number of confirmations required for transactions
@@ -437,14 +440,16 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to withdraw funds from the contract
-    function withdraw() public onlyMembers{
-        uint256 balanceToWithdraw = balance[msg.sender] + loyaltyFeeBalance[msg.sender] ;
+    function withdraw() public {
+        uint256 balanceToWithdraw = balance[msg.sender] ;
         require(balanceToWithdraw > 0, "No balance to withdraw");
         balance[msg.sender] = 0;
-        loyaltyFeeBalance[msg.sender] = 0;
         IERC20(USDC).approve(address(this), balanceToWithdraw);
         IERC20(USDC).transferFrom(address(this), msg.sender, balanceToWithdraw);
         emit withdrawHappened(msg.sender, balanceToWithdraw) ;
     }
 
+    function getNumberOfCandidateTransaction() public view returns(uint256) {
+        return transactions_candidate.length ;
+    }
 }

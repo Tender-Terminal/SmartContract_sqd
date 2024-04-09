@@ -96,8 +96,11 @@ contract ContentNFT is ERC721Upgradeable {
     // Function to handle NFT transfers and record transfer history
     function transferFrom(address from, address to, uint256 tokenId) public override{
         super.transferFrom(from, to, tokenId);
-        ICreatorGroup(creators[tokenId]).alarmLoyaltyFeeReceived(tokenId, loyaltyFee[tokenId]);
-        IERC20(USDC).transferFrom(msg.sender, creators[tokenId], loyaltyFee[tokenId]);
+        if(transferHistory[tokenId].length > 1){
+            console.log("Here is ContentNFT") ;
+            ICreatorGroup(creators[tokenId]).alarmLoyaltyFeeReceived(tokenId, loyaltyFee[tokenId]);
+            IERC20(USDC).transferFrom(msg.sender, creators[tokenId], loyaltyFee[tokenId]);
+        }    
         transferHistory[tokenId].push(TransferHistory(from, to, block.timestamp));
     }
     
@@ -110,4 +113,5 @@ contract ContentNFT is ERC721Upgradeable {
     function getLoyaltyFee(uint256 tokenId) public view returns (uint256) {
         return loyaltyFee[tokenId];
     }
+
 }
