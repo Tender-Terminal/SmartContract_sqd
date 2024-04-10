@@ -452,4 +452,8 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function getNumberOfCandidateTransaction() public view returns(uint256) {
         return transactions_candidate.length ;
     }
+
+    function getNumberOfSaleOfferingTransaction() public view returns(uint256) {
+        return transactions_offering.length ;
+    }
 }

@@ -39,4 +39,12 @@ interface IMarketplace {
     function getDutchAuctionPrice(uint256 id) external view returns (uint256);
 
     function setPercentForLoyaltyFee(uint256 _percentForLoyaltyFee) external ;
+
+    function getOfferingSaleAuctionNumber() external view returns(uint256)  ;
+
+    function getListedDutchAuctionNumber() external view returns(uint256) ;
+
+    function getListedEnglishAuctionNumber() external view returns(uint256) ;
+
+    function getListedNumber() external view returns(uint256) ;
 }

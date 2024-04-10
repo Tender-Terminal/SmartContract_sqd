@@ -71,6 +71,7 @@ contract Marketplace {
     offeringSale[] public offeringSales; // Array to store instances of offering sale contracts
     mapping(uint256 => uint256) public offeringSale_listedNumber; // Mapping to track the number of items listed in each offering sale
 
+
     // Modifier to restrict access to only the contract owner
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -372,6 +373,19 @@ contract Marketplace {
         require(!(listedNFTs[id]._saleType == SaleType.ENGLISH_AUCTION && englishAuctions.length > 0), "Already english auction started!") ;
         cancelListingState[id] = false ;
         emit canceledListing(id, msg.sender) ;
+    }
+
+    function getListedNumber() public view returns(uint256){
+        return listedNFTs.length ;
+    }
+    function getListedEnglishAuctionNumber() public view returns(uint256){
+        return englishAuctions.length ;
+    }
+    function getListedDutchAuctionNumber() public view returns(uint256){
+        return dutchAuctions.length;
+    }
+    function getOfferingSaleAuctionNumber() public view returns(uint256){
+        return offeringSales.length;
     }
 
 }

@@ -68,6 +68,8 @@ interface ICreatorGroup {
 
     function getNumberOfCandidateTransaction() external view returns(uint256) ;
 
+    function getNumberOfSaleOfferingTransaction() external view returns(uint256)  ;
+
     function getConfirmNumberOfOfferingSaleTransaction(uint256 index) external view returns(uint256) ;
 
     function getConfirmNumberOfDirectorSettingTransaction(uint256 index) external view returns(uint256) ;
