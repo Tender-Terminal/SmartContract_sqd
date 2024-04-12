@@ -12,4 +12,5 @@ interface IFactory {
     function getCreatorGroupAddress(uint256 id) external view returns(address);
     function isInAgencies(address _agency) external view returns(bool) ;
     function withdraw() external;
+    function setTeamScoreForCreatorGroup(uint256 id, uint256 score) external ;
 }

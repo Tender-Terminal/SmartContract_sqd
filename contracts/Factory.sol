@@ -23,7 +23,7 @@ contract Factory {
     address public USDC; // Address of the USDC token contract
     mapping(address => uint256) public agencyRevenuePercent; // Mapping to store agency revenue percentage for each agency address
     address[] public agencies; // Array to store addresses of agencies associated with the contract
-
+    
     // Modifier to restrict access to only the contract owner
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -100,5 +100,9 @@ contract Factory {
         IERC20(USDC).approve(address(this), amount);
         IERC20(USDC).transferFrom(address(this), msg.sender, amount);
         emit Withdrawal(msg.sender, amount);
+    }
+
+    function setTeamScoreForCreatorGroup(uint256 id, uint256 score) public onlyOwner{
+        ICreatorGroup(Creators[id]).setTeamScore(score);
     }
 }

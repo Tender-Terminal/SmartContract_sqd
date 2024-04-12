@@ -35,11 +35,13 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     soldInfor[] public soldInformation;  // Array to store sold NFT information
     uint256 public currentDistributeNumber; // Current distribution number
     uint256 public teamScore; // Team score
+    uint256 public totalEarning;
 
     uint256 public numberOfNFT; // Number of NFTs in the group
     mapping(uint256 => uint256) public nftIdArr; // Mapping of NFT IDs
     mapping(uint256 => address) public nftAddressArr; // Mapping of NFT addresses
     mapping(uint256 => bool) public listedState; // Mapping to track the listing state of NFTs
+    mapping(uint256 => bool) public soldOutState; // Mapping to track the listing state of NFTs
 
     mapping(address => mapping(uint256 => uint256)) public revenueDistribution; // Mapping for revenue distribution of NFTs
     mapping(address => mapping(uint256 => uint256)) public getNFTId; // Mapping for getting NFT IDs
@@ -64,6 +66,15 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     transaction_offering[] public transactions_offering; // Array of  offering transaction
     
     mapping(address => mapping(uint256 => bool)) public confirmTransaction_Offering; // Mapping for offering transaction confirmed state
+
+    // Struct for offering transactions
+    struct transaction_burn {
+        uint256 id;
+        bool endState;
+    }
+    transaction_burn[] public transactions_burn; // Array of  offering transaction
+    
+    mapping(address => mapping(uint256 => bool)) public confirmTransaction_Burn; // Mapping for offering transaction confirmed state
 
 
     struct record_member{
@@ -92,6 +103,11 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         _;
     }
 
+    modifier onlyFactory(){
+        require(msg.sender == factory, "Only factory can call this function.") ;
+        _;
+    }
+
     // events
     event AgencyAdded(address indexed member, address agency);
     event AgencyRemoved(address indexed member, address agency);
@@ -112,6 +128,8 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     event ConfirmationRequiredNumberSet(uint256 indexed confirmNumber);
     event withdrawHappened(address indexed from, uint256 balanceToWithdraw) ;
     event LoyaltyFeeReceived(uint256 id, uint256 price) ;
+    event BurnTransactionProposed(uint256 id);
+    event BurnTransactionConfirmed(uint256 index, address from, bool state) ;
 
     // Function to initialize the CreatorGroup contract with member addresses and other parameters
     function initialize(string memory _name, string memory _description, address[] memory _members, 
@@ -178,7 +196,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to set the team score
-    function setTeamScore(uint256 value) onlyDirector public{
+    function setTeamScore(uint256 value) onlyFactory public{
         teamScore = value ;
         emit TeamScoreSet(value);
     }
@@ -202,7 +220,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         for(uint256 i = 0 ; i < temp.length ; i ++){
             Recording[id][i]._sum = sum ;
         }
-        console.log("alarmsoldout: id %d", id) ;
+        soldOutState[id] = true ;
         soldInformation.push(soldInfor(id, price, false)) ;
     }
 
@@ -233,22 +251,6 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         }
         numberOfNFT ++ ;
         emit NFTMinted(_targetNFT, numberOfNFT - 1);
-    }
-
-    // Function to burn an NFT
-    function burn(uint256 id) onlyDirector public{
-        address nftAddress = nftAddressArr[id] ;
-        uint256 tokenId = nftIdArr[id] ;
-        IERC20(USDC).approve(nftAddress, burnFee);
-        IContentNFT(nftAddress).burn(tokenId);
-        nftIdArr[id] = nftIdArr[numberOfNFT - 1] ;
-        delete nftIdArr[numberOfNFT - 1] ;
-        nftAddressArr[id] = nftAddressArr[numberOfNFT - 1] ;
-        delete nftAddressArr[numberOfNFT - 1];
-        getNFTId[nftAddressArr[id]][nftIdArr[id]] = id ;
-        delete getNFTId[nftAddress][tokenId] ;
-        numberOfNFT -- ;
-        emit NFTBurned(id);
     }
 
     // Function to list an NFT for an English auction
@@ -299,7 +301,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Function to distribute revenue from sold NFTs
     function eachDistribution(uint256 id, uint256 value) internal {
-
+        totalEarning += value ;
         console.log("eachDistribution: id-> %d  value-> %d", id, value) ;
         uint256 count = Recording[id].length ;
         uint256 eachTeamScore = (value * teamScore / 100) / count ;
@@ -333,6 +335,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function cancelListing(uint256 id) onlyDirector public{
         require(listedState[id] == true, "Not Listed!") ;
         IMarketplace(marketplace).cancelListing(nftAddressArr[id], nftIdArr[id]) ;
+        listedState[id] = false ;
     }
 
     // Function to submit a director setting transaction
@@ -370,7 +373,6 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function submitOfferingSaleTransaction(uint256 _marketId, address _tokenContractAddress, uint256 tokenId, address _buyer, uint256 _price) onlyMarketplace public {
 
         uint256 id = getNFTId[_tokenContractAddress][tokenId] ;
-        require(id != 0 , "Invalid NFT");
         require(listedState[id] == true, "Not listed");
         transactions_offering.push(transaction_offering(_marketId, id, _buyer, _price, false));
         emit OfferingSaleTransactionProposed(_tokenContractAddress, tokenId, _buyer, _price);
@@ -401,6 +403,54 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 count = 0 ;
         for(uint256 i = 0 ; i < numberOfMembers ; i ++){
             if(confirmTransaction_Offering[members[i]][index] == true || confirmTransaction_Offering[agency[members[i]]][index] == true){
+                count ++ ;
+            }
+        }
+        return count ;
+    }
+
+
+    function submitBurnTransaction(uint256 id) onlyMembers public {
+        require(listedState[id] == false, "Not listed");
+        transactions_burn.push(transaction_burn(id, false));
+        emit BurnTransactionProposed(id);
+    }
+
+    // Function to confirm an offering sale transaction
+    function confirmBurnTransaction(uint256 index, bool state) onlyMembers public{
+        confirmTransaction_Burn[msg.sender][index] = state;
+        emit BurnTransactionConfirmed(index, msg.sender, state) ;
+    }
+
+    // Function to execute an offering sale transaction
+    function excuteBurnTransaction(uint256 index) onlyMembers public{
+        uint256 count = getConfirmNumberOfBurnTransaction(index);
+        require(count >= numConfirmationRequired, "Not confirmed enough!!!") ;
+        transactions_burn[index].endState = true ;
+        for(uint256 i = 0 ; i < transactions_burn.length ; i ++){
+            if(transactions_burn[i].id == transactions_burn[index].id){
+                transactions_burn[i].endState = true ;
+            }
+        }
+        uint256 id = transactions_burn[index].id ;
+        address nftAddress = nftAddressArr[id] ;
+        uint256 tokenId = nftIdArr[id] ;
+        IERC20(USDC).approve(nftAddress, burnFee);
+        IContentNFT(nftAddress).burn(tokenId);
+        nftIdArr[id] = nftIdArr[numberOfNFT - 1] ;
+        delete nftIdArr[numberOfNFT - 1] ;
+        nftAddressArr[id] = nftAddressArr[numberOfNFT - 1] ;
+        delete nftAddressArr[numberOfNFT - 1];
+        getNFTId[nftAddressArr[id]][nftIdArr[id]] = id ;
+        delete getNFTId[nftAddress][tokenId] ;
+        numberOfNFT -- ;
+        emit NFTBurned(id);
+    }
+
+    function getConfirmNumberOfBurnTransaction(uint256 index) public view returns(uint256){
+        uint256 count = 0 ;
+        for(uint256 i = 0 ; i < numberOfMembers ; i ++){
+            if(confirmTransaction_Burn[members[i]][index] == true || confirmTransaction_Burn[agency[members[i]]][index] == true){
                 count ++ ;
             }
         }
@@ -455,5 +505,8 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     function getNumberOfSaleOfferingTransaction() public view returns(uint256) {
         return transactions_offering.length ;
+    }
+    function getNumberOfBurnTransaction() public view returns(uint256) {
+        return transactions_burn.length ;
     }
 }

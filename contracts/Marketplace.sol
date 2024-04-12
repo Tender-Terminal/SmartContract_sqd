@@ -13,9 +13,9 @@ contract Marketplace {
     uint256 public balanceOfDevelopmentTeam ; // Balance of the development team
     uint256 public percentForSeller; // Percentage of the Seller
     uint256 public percentForLoyaltyFee ; // Percentage of the loyalty fee
-    mapping(address => uint256) balanceOfUser ; // Balance of the user
+    mapping(address => uint256) public balanceOfUser ; // Balance of the user
     address public USDC ; // Address of the USDC
-    mapping(address => uint256) balanceOfSeller ; // Balance of the seller
+    mapping(address => uint256) public balanceOfSeller ; // Balance of the seller
     // Enum defining different sale types
     enum SaleType {
         ENGLISH_AUCTION,
@@ -36,8 +36,8 @@ contract Marketplace {
     }
 
     listedNFT[] public listedNFTs; // Array to store listed NFTs
-    mapping(uint256 => bool) cancelListingState ; // Array to store state of cancelListing
-    mapping(uint256 => bool) recordAddRevenueState ; // Array to store state of recordAddRevenue
+    mapping(uint256 => bool) public cancelListingState ; // Array to store state of cancelListing
+    mapping(uint256 => bool) public recordAddRevenueState ; // Array to store state of recordAddRevenue
 
     // Struct to handle English auction details
     struct englishAuction {
@@ -45,7 +45,6 @@ contract Marketplace {
         uint256 salePeriod;
         address currentWinner;
         uint256 currentPrice;
-        
     }
     mapping(uint256 => mapping(address => uint256)) englishAuction_balancesForWithdraw; // Mapping to store balances available for withdrawal in English auctions
     englishAuction[] public englishAuctions; // Array to store instances of English auction contracts
@@ -330,6 +329,8 @@ contract Marketplace {
     function withdrawFromOfferingSale(uint256 id) public{
         require(offeringSales.length > id, "Not listed in the offering sale list.");
         // uint256 listedId = offeringSale_listedNumber[id];
+        uint256 listedId = offeringSale_listedNumber[id];
+        require(listedNFTs[listedId].endState == true, "Not finished yet");
         uint256 amount = offeringSale_balancesForWithdraw[id][msg.sender] ;
         require(amount > 0, "You don't have any balance.");
         offeringSale_balancesForWithdraw[id][msg.sender] = 0 ;
@@ -357,6 +358,7 @@ contract Marketplace {
         recordRevenue(msg.sender, price - loyaltyFee, contractAddress, nftId) ;
         listedNFTs[listedId].endState = true;
         listedNFTs[listedId].endTime = block.timestamp;
+        offeringSale_balancesForWithdraw[id][buyer] = 0;
         emit BuyOfferingSale(buyer, contractAddress, nftId, price, block.timestamp);
     }
 
@@ -371,7 +373,8 @@ contract Marketplace {
         }
         require(listedNFTs[id].endState == false, "Already sold out!") ;
         require(!(listedNFTs[id]._saleType == SaleType.ENGLISH_AUCTION && englishAuctions.length > 0), "Already english auction started!") ;
-        cancelListingState[id] = false ;
+        require(!(listedNFTs[id]._saleType == SaleType.OFFERING_SALE && offeringSales.length > 0), "Already sale offering started!") ;
+        cancelListingState[id] = true ;
         emit canceledListing(id, msg.sender) ;
     }
 
@@ -386,6 +389,13 @@ contract Marketplace {
     }
     function getOfferingSaleAuctionNumber() public view returns(uint256){
         return offeringSales.length;
+    }
+
+    function withdrawBalanceForEnglishAuction(uint256 id, address to) public view returns(uint256){
+        return englishAuction_balancesForWithdraw[id][to] ;
+    }
+    function withdrawBalanceForOfferingSale(uint256 id, address to) public view returns(uint256){
+        return offeringSale_balancesForWithdraw[id][to] ;
     }
 
 }

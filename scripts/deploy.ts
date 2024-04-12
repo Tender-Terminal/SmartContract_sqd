@@ -8,7 +8,7 @@ async function main() {
     const percentForSeller: number = 85;
     console.log('Contract is deploying...')
     // Deploying the My404 contract, passing the deployer's address as a constructor argument.
-    const instanceUSDC = await ethers.deployContract('USDCToken', [1e10]);
+    const instanceUSDC = await ethers.deployContract('USDCToken', [100000000]);
 
     // Waiting for the contract deployment to be confirmed on the blockchain.
     await instanceUSDC.waitForDeployment()

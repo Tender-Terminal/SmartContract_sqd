@@ -47,4 +47,8 @@ interface IMarketplace {
     function getListedEnglishAuctionNumber() external view returns(uint256) ;
 
     function getListedNumber() external view returns(uint256) ;
+
+    function withdrawBalanceForEnglishAuction(uint256 id, address to) external view returns(uint256) ;
+
+    function withdrawBalanceForOfferingSale(uint256 id, address to) external view returns(uint256) ;
 }

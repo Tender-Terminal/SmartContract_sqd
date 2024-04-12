@@ -22,8 +22,6 @@ interface ICreatorGroup {
     
     function mint(string memory _nftURI, address _targetNFT) external;
     
-    function burn(uint256 id) external;
-    
     function listToEnglishAuction(uint256 id, uint256 initialPrice, uint256 salePeriod) external;
     
     function listToDutchAuction(uint256 id, uint256 initialPrice, uint256 reducingRate, uint256 salePeriod) external;
@@ -73,4 +71,9 @@ interface ICreatorGroup {
     function getConfirmNumberOfOfferingSaleTransaction(uint256 index) external view returns(uint256) ;
 
     function getConfirmNumberOfDirectorSettingTransaction(uint256 index) external view returns(uint256) ;
+    function submitBurnTransaction(uint256 id) external;
+    function confirmBurnTransaction(uint256 index, bool state) external;
+    function excuteBurnTransaction(uint256 index) external;
+    function getConfirmNumberOfBurnTransaction(uint256 index) external view returns (uint256);
+    function getNumberOfBurnTransaction() external view returns(uint256) ;
 }
