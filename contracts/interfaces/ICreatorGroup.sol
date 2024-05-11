@@ -10,10 +10,6 @@ interface ICreatorGroup {
     function initialize(string memory _name, string memory _description, address[] memory _members,  
         uint256 _numConfirmationRequired, address _marketplace, uint256 _mintFee, uint256 _burnFee, address _USDC) external;
     
-    function addAgency(address _agency) external;
-
-    function removeAgency() external;
-    
     function setTeamScore(uint256 value) external;
     
     function alarmSoldOut(address contractAddress, uint256 nftId, uint256 price) external;

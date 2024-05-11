@@ -36,7 +36,7 @@ contract ContentNFT is ERC721Upgradeable {
     // Events
     event minted(address from, uint256 tokenId, string nftURI);
     event burned(address from, uint256 tokenId);
-
+ 
     // Function to initialize the NFT contract
     function initialize(string memory _name, string memory _symbol, string memory _description, 
         string memory _nftURI, address _target, uint256 _mintFee, uint256 _burnFee, address _USDC, address _marketplace) initializer public {

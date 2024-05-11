@@ -16,14 +16,13 @@ let user3:  any;
 let developmentTeam: any;
 let buyer1: any ;
 let buyer2: any ;
-let agency1: any ;
 const percentForSeller:number = 85;
 const mintFee:number = 0;
 const burnFee:number = 0;
 describe("Create Initial Contracts of all types", function () {
      
     it("get accounts", async function () {
-        [owner, user1, user2, developmentTeam, buyer1, buyer2, agency1, user3] = await ethers.getSigners();
+        [owner, user1, user2, developmentTeam, buyer1, buyer2, user3] = await ethers.getSigners();
         console.log("\tAccount address\t", await owner.getAddress());
     })
     it("should deploy USDC Contract", async function () {
@@ -152,12 +151,7 @@ describe("test creating CreatorGroup contracts and mint & burn NFTs", async func
         console.log("\tUSDC balance of factory_address\t", factory_address_balance);
     })
 })
-describe("check adding agency", async function(){
-    it("record agency to the factory contract and creator group", async function(){
-        await Factory.connect(agency1).addAgency(20) ;
-        await creatorGroup.connect(user1).addAgency(agency1) ;
-    })
-})
+
 describe("listing EnglishAuction & biding & endAuction", async function(){
     it("list to English Auction", async function(){
         await creatorGroup.connect(user1).listToEnglishAuction(0, 200, 300) ;
@@ -291,21 +285,16 @@ describe("In creatorGroup contract, withdraw all balances", async function(){
         console.log("\tuser1_balance: " + user1_balance) ;
         const user2_balance = await creatorGroup.balance(user2) ;
         console.log("\tuser2_balance: " + user2_balance) ;
-        const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
-        console.log("\tUSDC balance of agency1\t", agency1_balance);
     })
     it("withdraw all balances", async function(){
         await creatorGroup.connect(user1).withdraw() ;
         await creatorGroup.connect(user2).withdraw() ;
-        await creatorGroup.connect(agency1).withdraw() ;
     })
     it("check the balance of each address", async function(){
         const user1_balance = await creatorGroup.balance(user1) ;
         console.log("\tuser1_balance: " + user1_balance) ;
         const user2_balance = await creatorGroup.balance(user2) ;
         console.log("\tuser2_balance: " + user2_balance) ;
-        const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
-        console.log("\tUSDC balance of agency1\t", agency1_balance);
     })
     it("check balance of CreatorGroup Contract", async function(){
         const group_balance = await USDC_Contract.balanceOf(group_address) ;
@@ -356,16 +345,12 @@ describe("add member to the group processing happen", async function(){
     //     console.log("\tUSDC balance of user2\t", user2_balance);
     //     const user3_balance = await USDC_Contract.balanceOf(user3) ;
     //     console.log("\tUSDC balance of user3\t", user3_balance);
-    //     const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
-    //     console.log("\tUSDC balance of agency1\t", agency1_balance);
     // })
     it("check the balance of each address", async function(){
         const user1_balance = await creatorGroup.balance(user1) ;
         console.log("\tuser1_balance: " + user1_balance) ;
         const user2_balance = await creatorGroup.balance(user2) ;
         console.log("\tuser2_balance: " + user2_balance) ;
-        const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
-        console.log("\tUSDC balance of agency1\t", agency1_balance);
     })
     it("withdraw from Marketplace", async function(){
         await creatorGroup.connect(user1).withdrawFromMarketplace() ;
@@ -397,8 +382,6 @@ describe("add member to the group processing happen", async function(){
         console.log("\tuser1_balance: " + user1_balance) ;
         const user2_balance = await creatorGroup.balance(user2) ;
         console.log("\tuser2_balance: " + user2_balance) ;
-        const agency1_balance = await USDC_Contract.balanceOf(agency1) ;
-        console.log("\tUSDC balance of agency1\t", agency1_balance);
         const balance_user3 = await creatorGroup.balance(user3) ;
         console.log("\tbalance_user3: " + balance_user3);
     })

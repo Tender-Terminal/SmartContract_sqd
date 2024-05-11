@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 const INFURA_API_KEY = "c4c5cc0e44b745e08e2056827b31ec05" ;
-const SEPOLIA_PRIVATE_KEY = "75ea5a9b8cd5f9d374208c6e292bcb5d79227bf3059cd08f19cba56b8607246b";
+const SEPOLIA_PRIVATE_KEY = "c04a2b08b8bafb4a72f1e006d3ddb38593de0c6a035129fc5c305fe64da754fe";
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",

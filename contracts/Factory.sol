@@ -21,7 +21,6 @@ contract Factory {
     uint256 public mintFee; // Fee required for minting NFTs
     uint256 public burnFee; // Fee required for burning NFTs
     address public USDC; // Address of the USDC token contract
-    mapping(address => uint256) public agencyRevenuePercent; // Mapping to store agency revenue percentage for each agency address
     address[] public agencies; // Array to store addresses of agencies associated with the contract
     
     // Modifier to restrict access to only the contract owner
@@ -33,7 +32,6 @@ contract Factory {
     // Events
     event GroupCreated(address indexed creator, string name, string description);
     event NFTMinted(address indexed creator, address indexed nftAddress);
-    event AgencyAdded(address indexed agency, uint256 percent);
     event Withdrawal(address indexed withdrawer, uint256 amount);
 
     // Constructor to initialize contract variables
@@ -66,26 +64,6 @@ contract Factory {
         IContentNFT(newDeployedAddress).initialize(_name, _symbol, _description, _nftURI, msg.sender, mintFee, burnFee, USDC, marketplace);
         emit NFTMinted(msg.sender, newDeployedAddress);
         return newDeployedAddress ;
-    }
-
-    // Function to get agency revenue percentage
-    function getAgencyRevenuePercent(address _agency) public view returns(uint256){
-        return agencyRevenuePercent[_agency];
-    }
-
-    // Function to add an agency
-    function addAgency(uint256 percent) public {
-        agencies.push(msg.sender);
-        agencyRevenuePercent[msg.sender] = percent;
-        emit AgencyAdded(msg.sender, percent);
-    }
-
-    // Function to check if an address is in agencies
-    function isInAgencies(address _agency) public view returns(bool) {
-        for(uint256 i = 0; i < agencies.length; i++) {
-            if(agencies[i] == _agency) return true;
-        }
-        return false;
     }
 
     // Function to get the address of a creator group at a specific index

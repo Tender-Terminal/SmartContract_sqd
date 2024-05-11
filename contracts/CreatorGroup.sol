@@ -20,14 +20,10 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     uint256 public burnFee; // Fee for burning NFTs
     uint256 public numberOfMembers; // Number of members in the group
     address[] public members; // Array to store member addresses
-    mapping(address => address) public agency; // Array to store agency members
-    mapping(address => uint256) public agencyPercentForRevenue; // Array to store agency percent for Revenue
-    mapping(address => bool) public isHavingAgency; // Flag indicating if a member has an agency
     address public factory; // Address of the factory contract
     address public marketplace; // Address of the marketplace contract
     mapping(address => uint256) public balance; // Mapping to store balances of members
     mapping(address => bool) public isOwner; // Mapping to track ownership status of addresses
-    mapping(address => bool) public isAgency; // Flag indicating if an address is an agency
     uint256 public numConfirmationRequired; // Number of confirmations required for transactions
     address public director; // Address of the director for certain functions
     mapping(address => mapping(uint256 => bool)) public transactionsConfirmState; // Mapping to track transaction confirmation state
@@ -93,7 +89,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Modifier to restrict access to only members
     modifier onlyMembers(){
-        require(isOwner[msg.sender] == true || isAgency[msg.sender] == true, "Only members can call this function");
+        require(isOwner[msg.sender] == true, "Only members can call this function");
         _;
     }
     
@@ -109,8 +105,6 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // events
-    event AgencyAdded(address indexed member, address agency);
-    event AgencyRemoved(address indexed member, address agency);
     event TeamScoreSet(uint256 value);
     event NFTMinted(address indexed nftAddress, uint256 indexed nftId);
     event NFTBurned(uint256 indexed nftId);
@@ -163,7 +157,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to remove a member from the CreatorGroup
-    function removeMember(address _removeMember) onlyDirector public{
+    function removeMember(address _removeMember) onlyMembers public{
         require(isOwner[_removeMember] == true, "It's not a member!") ;
         delete isOwner[_removeMember];
         delete memberFromNFTId[_removeMember] ;
@@ -176,24 +170,6 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         numberOfMembers -- ;
     }
 
-    // Function to add an agency to a member
-    function addAgency(address _agency) onlyMembers public{
-        require(IFactory(factory).isInAgencies(_agency), "Invalid agency") ;
-        agency[msg.sender] = _agency;
-        isAgency[_agency] = true;
-        agencyPercentForRevenue[_agency] = IFactory(factory).getAgencyRevenuePercent(_agency);
-        isHavingAgency[msg.sender] = true ;
-        emit AgencyAdded(msg.sender, _agency);
-    }
-
-    // Function to remove an agency from a member
-    function removeAgency() onlyMembers public{
-        require(agency[msg.sender] != address(0), "Not added any agency") ;
-        delete agencyPercentForRevenue[agency[msg.sender]];
-        emit AgencyRemoved(msg.sender, agency[msg.sender]);
-        delete agency[msg.sender];
-        isHavingAgency[msg.sender] = false ; 
-    }
 
     // Function to set the team score
     function setTeamScore(uint256 value) onlyFactory public{
@@ -321,12 +297,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
             address tmp_address = Recording[id][i]._member ;
             revenueDistribution[tmp_address][id] += _revenues[i] ;
             _members[i] = tmp_address ;
-            if(isHavingAgency[tmp_address] == false) balance[tmp_address] += _revenues[i] ;
-            else{
-                address _agency = agency[tmp_address] ;
-                balance[_agency] += _revenues[i] * agencyPercentForRevenue[_agency] / 100 ;
-                balance[tmp_address] += _revenues[i] * (100 - agencyPercentForRevenue[_agency]) / 100 ;
-            }
+            balance[tmp_address] += _revenues[i] ;
         }
         IMarketplace(marketplace).addBalanceOfUser(_members, _revenues, nftAddressArr[id], nftIdArr[id]);
     }
@@ -363,7 +334,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function getConfirmNumberOfDirectorSettingTransaction(uint256 index) public view returns(uint256){
         uint256 count = 0 ;
         for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            if(confirmTransaction_Candidate[members[i]][index] == true || confirmTransaction_Candidate[agency[members[i]]][index] == true){
+            if(confirmTransaction_Candidate[members[i]][index] == true ){
                 count ++ ;
             }
         }
@@ -402,7 +373,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function getConfirmNumberOfOfferingSaleTransaction(uint256 index) public view returns(uint256){
         uint256 count = 0 ;
         for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            if(confirmTransaction_Offering[members[i]][index] == true || confirmTransaction_Offering[agency[members[i]]][index] == true){
+            if(confirmTransaction_Offering[members[i]][index] == true){
                 count ++ ;
             }
         }
@@ -450,7 +421,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function getConfirmNumberOfBurnTransaction(uint256 index) public view returns(uint256){
         uint256 count = 0 ;
         for(uint256 i = 0 ; i < numberOfMembers ; i ++){
-            if(confirmTransaction_Burn[members[i]][index] == true || confirmTransaction_Burn[agency[members[i]]][index] == true){
+            if(confirmTransaction_Burn[members[i]][index] == true){
                 count ++ ;
             }
         }

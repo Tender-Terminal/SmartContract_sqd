@@ -37,9 +37,6 @@ async function main() {
     await instanceFactory.waitForDeployment()
     const Factory_Address = await instanceFactory.getAddress();
     console.log(`Factory is deployed. ${instanceFactory.target}`);
-    // const tx = await my404.setWhitelist(deployer.address, true)
-    // await tx.wait() // Waiting for the transaction to be mined.
-    // console.log(`Tx hash for whitelisting deployer address: ${tx.hash}`)
 }
 
 // This pattern allows the use of async/await throughout and ensures that errors are caught and handled properly.
