@@ -8,15 +8,15 @@ async function main() {
     const percentForSeller: number = 85;
     console.log('Contract is deploying...')
     // Deploying the My404 contract, passing the deployer's address as a constructor argument.
-    const instanceUSDC = await ethers.deployContract('USDCToken', [100000000]);
+    // const instanceUSDC = await ethers.deployContract('USDCToken', [100000000]);
 
-    // Waiting for the contract deployment to be confirmed on the blockchain.
-    await instanceUSDC.waitForDeployment()
+    // // Waiting for the contract deployment to be confirmed on the blockchain.
+    // await instanceUSDC.waitForDeployment()
 
-    // Logging the address of the deployed My404 contract.
-    console.log(`USDC contract is deployed. Token address: ${instanceUSDC.target}`)
+    // // Logging the address of the deployed My404 contract.
+    // console.log(`USDC contract is deployed. Token address: ${instanceUSDC.target}`)
 
-    const USDC_Address = await instanceUSDC.getAddress();
+    const USDC_Address = "0x1578876aCc56349FC800B1f8efe624c688f5eF4B";
     const developmentTeam: string = "0x9319Ec01DcB2086dc828C9A23Fa32DFb2FE10143";
     const Marketplace = await ethers.deployContract('Marketplace', [developmentTeam, percentForSeller, USDC_Address]);
     await Marketplace.waitForDeployment()

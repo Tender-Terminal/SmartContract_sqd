@@ -63,7 +63,7 @@ contract Marketplace {
     // Strcut to handle Offering Sale details
     struct offeringSale{
         uint256 initialPrice;
-        
+        uint256 bidNumber ;
     }
     mapping(uint256 => mapping(address => uint256)) offeringSale_balancesForWithdraw; // Mapping to store balances available for withdrawal in offering sales
     mapping(uint256 => mapping(address => uint256)) offeringSale_currentBids; // Mapping to store current bids in offering sales
@@ -196,7 +196,7 @@ contract Marketplace {
     function listToOfferingSale(address nftContractAddress, uint256 nftId, uint256 initialPrice) public{
         require(checkOwnerOfNFT(nftContractAddress, nftId) == true, "Invalid token owner");
         uint256 id = offeringSales.length;
-        offeringSale memory newSale = offeringSale(initialPrice);
+        offeringSale memory newSale = offeringSale(initialPrice, 0);
         offeringSales.push(newSale);
         listedNFT memory newListing = listedNFT(SaleType.OFFERING_SALE, id, msg.sender, nftContractAddress, nftId, block.timestamp, 0, false);
         offeringSale_listedNumber[id] = listedNFTs.length;
@@ -317,6 +317,7 @@ contract Marketplace {
         address currentOwner = listedNFTs[listedId].currentOwner;
         uint256 price = offeringSales[id].initialPrice ;
         require(sendingValue >= price, "You should send a price that is more than current price.") ;
+        offeringSales[id].bidNumber ++ ;
         IERC20(USDC).transferFrom(msg.sender, address(this), sendingValue) ;
         offeringSale_currentBids[id][msg.sender] = sendingValue;
         offeringSale_balancesForWithdraw[id][msg.sender] += sendingValue;
@@ -372,8 +373,9 @@ contract Marketplace {
             }
         }
         require(listedNFTs[id].endState == false, "Already sold out!") ;
-        require(!(listedNFTs[id]._saleType == SaleType.ENGLISH_AUCTION && englishAuctions.length > 0), "Already english auction started!") ;
-        require(!(listedNFTs[id]._saleType == SaleType.OFFERING_SALE && offeringSales.length > 0), "Already sale offering started!") ;
+        uint256 listId = listedNFTs[id].Id ;
+        require(!(listedNFTs[id]._saleType == SaleType.ENGLISH_AUCTION && englishAuctions[listId].currentPrice != englishAuctions[listId].initialPrice), "Already english auction started!") ;
+        require(!(listedNFTs[id]._saleType == SaleType.OFFERING_SALE &&  offeringSales[listId].bidNumber > 0), "Already sale offering started!") ;
         cancelListingState[id] = true ;
         emit canceledListing(id, msg.sender) ;
     }
