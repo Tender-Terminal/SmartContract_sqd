@@ -325,7 +325,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to execute a director setting transaction
-    function excuteDirectorSettingTransaction(uint256 index) onlyMembers public{
+    function executeDirectorSettingTransaction(uint256 index) onlyMembers public{
         uint256 count = getConfirmNumberOfDirectorSettingTransaction(index);
         require(count >= numConfirmationRequired, "Not confirmed enough!!!") ;
         director = transactions_candidate[index].candidate ;
@@ -396,7 +396,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to execute an offering sale transaction
-    function excuteBurnTransaction(uint256 index) onlyMembers public{
+    function executeBurnTransaction(uint256 index) onlyMembers public{
         uint256 count = getConfirmNumberOfBurnTransaction(index);
         require(count >= numConfirmationRequired, "Not confirmed enough!!!") ;
         transactions_burn[index].endState = true ;

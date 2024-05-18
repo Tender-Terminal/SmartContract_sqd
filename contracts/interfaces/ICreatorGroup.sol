@@ -32,13 +32,13 @@ interface ICreatorGroup {
     
     function confirmDirectorSettingTransaction(uint256 index, bool state) external;
     
-    function excuteDirectorSettingTransaction(uint256 index) external;
+    function executeDirectorSettingTransaction(uint256 index) external;
     
     function submitOfferingSaleTransaction(uint256 _marketId, address _tokenContractAddress, uint256 tokenId, address _buyer, uint256 _price) external;
     
     function confirmOfferingSaleTransaction(uint256 index, bool state) external;
     
-    function excuteOfferingSaleTransaction(uint256 index) external;
+    function executeOfferingSaleTransaction(uint256 index) external;
     
     function setConfirmationRequiredNumber(uint256 confirmNumber) external;
 
@@ -69,7 +69,7 @@ interface ICreatorGroup {
     function getConfirmNumberOfDirectorSettingTransaction(uint256 index) external view returns(uint256) ;
     function submitBurnTransaction(uint256 id) external;
     function confirmBurnTransaction(uint256 index, bool state) external;
-    function excuteBurnTransaction(uint256 index) external;
+    function executeBurnTransaction(uint256 index) external;
     function getConfirmNumberOfBurnTransaction(uint256 index) external view returns (uint256);
     function getNumberOfBurnTransaction() external view returns(uint256) ;
 }
