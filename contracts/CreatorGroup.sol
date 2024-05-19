@@ -12,6 +12,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract CreatorGroup is Initializable, ICreatorGroup {
+
     // State variables
     address public USDC; // USDC token address
     string public name; // Name of the CreatorGroup
@@ -23,7 +24,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     address public factory; // Address of the factory contract
     address public marketplace; // Address of the marketplace contract
     mapping(address => uint256) public balance; // Mapping to store balances of members
-    mapping(address => bool) public isOwner; // Mapping to track ownership status of addresses
+    mapping(address => bool) public isOwner; // Mapping to track ownership status of members' addresses
     uint256 public numConfirmationRequired; // Number of confirmations required for transactions
     address public director; // Address of the director for certain functions
     mapping(address => mapping(uint256 => bool)) public transactionsConfirmState; // Mapping to track transaction confirmation state
@@ -31,13 +32,13 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     soldInfor[] public soldInformation;  // Array to store sold NFT information
     uint256 public currentDistributeNumber; // Current distribution number
     uint256 public teamScore; // Team score
-    uint256 public totalEarning;
+    uint256 public totalEarning; //Total Earning
 
     uint256 public numberOfNFT; // Number of NFTs in the group
     mapping(uint256 => uint256) public nftIdArr; // Mapping of NFT IDs
     mapping(uint256 => address) public nftAddressArr; // Mapping of NFT addresses
     mapping(uint256 => bool) public listedState; // Mapping to track the listing state of NFTs
-    mapping(uint256 => bool) public soldOutState; // Mapping to track the listing state of NFTs
+    mapping(uint256 => bool) public soldOutState; // Mapping to track the sold state of NFTs
 
     mapping(address => mapping(uint256 => uint256)) public revenueDistribution; // Mapping for revenue distribution of NFTs
     mapping(address => mapping(uint256 => uint256)) public getNFTId; // Mapping for getting NFT IDs
@@ -63,14 +64,14 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     
     mapping(address => mapping(uint256 => bool)) public confirmTransaction_Offering; // Mapping for offering transaction confirmed state
 
-    // Struct for offering transactions
+    // Struct for burn transactions
     struct transaction_burn {
         uint256 id;
         bool endState;
     }
-    transaction_burn[] public transactions_burn; // Array of  offering transaction
+    transaction_burn[] public transactions_burn; // Array of  burn transaction
     
-    mapping(address => mapping(uint256 => bool)) public confirmTransaction_Burn; // Mapping for offering transaction confirmed state
+    mapping(address => mapping(uint256 => bool)) public confirmTransaction_Burn; // Mapping for burn transaction confirmed state
 
 
     struct record_member{
@@ -78,7 +79,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 _percent ;
         uint256 _sum ;
     }
-    mapping(uint256 => record_member[]) public Recording ;
+    mapping(uint256 => record_member[]) public Recording ; // Recording for sold NFT's distribution
 
 
     // Modifier to restrict access to only director
@@ -177,6 +178,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         emit TeamScoreSet(value);
     }
 
+    // Function to receive loyalty fee and distribute immediately automatically
     function alarmLoyaltyFeeReceived(uint256 nftId, uint256 price) public {
         uint256 id = getNFTId[msg.sender][nftId] ;
         eachDistribution(id, price) ;
@@ -356,7 +358,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     // Function to execute an offering sale transaction
-    function excuteOfferingSaleTransaction(uint256 index) onlyMembers public{
+    function executeOfferingSaleTransaction(uint256 index) onlyMembers public{
         uint256 count = getConfirmNumberOfOfferingSaleTransaction(index);
         require(count >= numConfirmationRequired, "Not confirmed enough!!!") ;
         transactions_offering[index].endState = true ;
