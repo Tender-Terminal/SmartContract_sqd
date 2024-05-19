@@ -166,7 +166,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         director = members[0];
         numberOfNFT = 0;
         currentDistributeNumber = 0;
-        teamScore = 20;
+        teamScore = 80;
         USDC = _USDC;
     }
 
