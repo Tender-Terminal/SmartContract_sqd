@@ -22,7 +22,6 @@ contract Factory {
     uint256 public burnFee; // Fee required for burning NFTs
     address public USDC; // Address of the USDC token contract
     address[] public agencies; // Array to store addresses of agencies associated with the contract
-    
     // Modifier to restrict access to only the contract owner
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -30,17 +29,29 @@ contract Factory {
     }
 
     // Events
-    event GroupCreated(address indexed creator, string name, string description);
+    event GroupCreated(
+        address indexed creator,
+        string name,
+        string description
+    );
     event NFTMinted(address indexed creator, address indexed nftAddress);
     event Withdrawal(address indexed withdrawer, uint256 amount);
 
     // Constructor to initialize contract variables
-    constructor(address _implementGroup, address _implementContent, address _marketplace, address _developmentTeam, uint256 _mintFee, uint256 _burnFee, address _USDC) {
+    constructor(
+        address _implementGroup,
+        address _implementContent,
+        address _marketplace,
+        address _developmentTeam,
+        uint256 _mintFee,
+        uint256 _burnFee,
+        address _USDC
+    ) {
         owner = msg.sender;
         marketplace = _marketplace;
         developmentTeam = _developmentTeam;
         numberOfCreators = 0;
-        mintFee = _mintFee; 
+        mintFee = _mintFee;
         burnFee = _burnFee;
         implementGroup = _implementGroup;
         implementContent = _implementContent;
@@ -48,26 +59,55 @@ contract Factory {
     }
 
     // Function to create a new group
-    function createGroup(string memory name, string memory description, address[] memory owners, uint256 numConfirmationRequired) external {
+    function createGroup(
+        string memory name,
+        string memory description,
+        address[] memory owners,
+        uint256 numConfirmationRequired
+    ) external {
         require(owners.length > 0, "At least one owner is required");
         address newDeployedAddress = Clones.clone(implementGroup);
-        ICreatorGroup(newDeployedAddress).initialize(name, description, owners, numConfirmationRequired, marketplace, mintFee, burnFee, USDC);
+        ICreatorGroup(newDeployedAddress).initialize(
+            name,
+            description,
+            owners,
+            numConfirmationRequired,
+            marketplace,
+            mintFee,
+            burnFee,
+            USDC
+        );
         Creators.push(newDeployedAddress);
         numberOfCreators = Creators.length;
         emit GroupCreated(msg.sender, name, description);
     }
 
     // Function to mint a new NFT
-    function mintNew(string memory _nftURI, string memory _name, string memory _symbol, string memory _description) public returns(address) {
+    function mintNew(
+        string memory _nftURI,
+        string memory _name,
+        string memory _symbol,
+        string memory _description
+    ) public returns (address) {
         IERC20(USDC).transferFrom(msg.sender, address(this), mintFee);
         address newDeployedAddress = Clones.clone(implementContent);
-        IContentNFT(newDeployedAddress).initialize(_name, _symbol, _description, _nftURI, msg.sender, mintFee, burnFee, USDC, marketplace);
+        IContentNFT(newDeployedAddress).initialize(
+            _name,
+            _symbol,
+            _description,
+            _nftURI,
+            msg.sender,
+            mintFee,
+            burnFee,
+            USDC,
+            marketplace
+        );
         emit NFTMinted(msg.sender, newDeployedAddress);
-        return newDeployedAddress ;
+        return newDeployedAddress;
     }
 
     // Function to get the address of a creator group at a specific index
-    function getCreatorGroupAddress(uint256 id) public view returns(address) {
+    function getCreatorGroupAddress(uint256 id) public view returns (address) {
         return Creators[id];
     }
 
@@ -80,7 +120,10 @@ contract Factory {
         emit Withdrawal(msg.sender, amount);
     }
 
-    function setTeamScoreForCreatorGroup(uint256 id, uint256 score) public onlyOwner{
+    function setTeamScoreForCreatorGroup(
+        uint256 id,
+        uint256 score
+    ) public onlyOwner {
         ICreatorGroup(Creators[id]).setTeamScore(score);
     }
 }

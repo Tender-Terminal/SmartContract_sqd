@@ -60,6 +60,9 @@ contract ContentNFT is ERC721Upgradeable {
         creators[tokenNumber] = owner;
         mintFee = _mintFee;
         burnFee = _burnFee;
+        transferHistory[tokenNumber].push(
+            TransferHistory(address(0), msg.sender, block.number)
+        );
         setTokenURI(_nftURI);
         USDC = _USDC;
         marketplace = _marketplace;
@@ -73,7 +76,7 @@ contract ContentNFT is ERC721Upgradeable {
         _mint(msg.sender, tokenNumber);
         creators[tokenNumber] = msg.sender;
         transferHistory[tokenNumber].push(
-            TransferHistory(address(0), msg.sender, block.timestamp)
+            TransferHistory(address(0), msg.sender, block.number)
         );
         setTokenURI(_nftURI);
         emit minted(msg.sender, tokenNumber - 1, _nftURI);
