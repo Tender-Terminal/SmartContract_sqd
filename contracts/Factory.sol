@@ -32,7 +32,8 @@ contract Factory {
     event GroupCreated(
         address indexed creator,
         string name,
-        string description
+        string description,
+        address newDeployedAddress
     );
     event NFTMinted(address indexed creator, address indexed nftAddress);
     event Withdrawal(address indexed withdrawer, uint256 amount);
@@ -79,7 +80,7 @@ contract Factory {
         );
         Creators.push(newDeployedAddress);
         numberOfCreators = Creators.length;
-        emit GroupCreated(msg.sender, name, description);
+        emit GroupCreated(msg.sender, name, description, newDeployedAddress);
     }
 
     // Function to mint a new NFT
