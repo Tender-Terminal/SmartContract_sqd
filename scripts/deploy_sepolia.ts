@@ -18,10 +18,10 @@ async function main() {
 
     const USDC_Address = "0x1578876aCc56349FC800B1f8efe624c688f5eF4B";
     const developmentTeam: string = "0x9319Ec01DcB2086dc828C9A23Fa32DFb2FE10143";
-    // const Marketplace = await ethers.deployContract('Marketplace', [developmentTeam, percentForSeller, USDC_Address]);
-    // await Marketplace.waitForDeployment()
-    // const Marketplace_Address = await Marketplace.getAddress();
-    // console.log(`Marketplace is deployed. ${Marketplace.target}`);
+    const Marketplace = await ethers.deployContract('Marketplace', [developmentTeam, percentForSeller, USDC_Address]);
+    await Marketplace.waitForDeployment()
+    const Marketplace_Address = await Marketplace.getAddress();
+    console.log(`Marketplace is deployed. ${Marketplace.target}`);
 
     const instanceGroup = await ethers.deployContract("CreatorGroup");
     await instanceGroup.waitForDeployment() ;
@@ -33,7 +33,7 @@ async function main() {
     const Content_Address = await instanceContent.getAddress();
     const mintFee:number = 0;
     const burnFee:number = 0;
-    const instanceFactory = await ethers.deployContract("Factory", [Group_Address, Content_Address, "0x10934Cb0c106F4164B0E84663E91ABB2fA0BEf3A", developmentTeam, mintFee, burnFee, USDC_Address]);
+    const instanceFactory = await ethers.deployContract("Factory", [Group_Address, Content_Address, Marketplace_Address, developmentTeam, mintFee, burnFee, USDC_Address]);
     await instanceFactory.waitForDeployment()
     const Factory_Address = await instanceFactory.getAddress();
     console.log(`Factory is deployed. ${instanceFactory.target}`);
