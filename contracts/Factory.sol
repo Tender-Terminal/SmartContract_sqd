@@ -32,10 +32,11 @@ contract Factory {
     event GroupCreated(
         address indexed creator,
         string name,
-        string description
+        string description,
+        address newDeployedAddress
     );
-    event NFTMinted(address indexed creator, address indexed nftAddress);
-    event Withdrawal(address indexed withdrawer, uint256 amount);
+    event NewNFTMinted(address indexed creator, address indexed nftAddress);
+    event WithdrawalFromDevelopmentTeam(address indexed withdrawer, uint256 amount);
 
     // Constructor to initialize contract variables
     constructor(
@@ -79,7 +80,7 @@ contract Factory {
         );
         Creators.push(newDeployedAddress);
         numberOfCreators = Creators.length;
-        emit GroupCreated(msg.sender, name, description);
+        emit GroupCreated(msg.sender, name, description, newDeployedAddress);
     }
 
     // Function to mint a new NFT
@@ -102,7 +103,7 @@ contract Factory {
             USDC,
             marketplace
         );
-        emit NFTMinted(msg.sender, newDeployedAddress);
+        emit NewNFTMinted(msg.sender, newDeployedAddress);
         return newDeployedAddress;
     }
 
@@ -117,7 +118,7 @@ contract Factory {
         uint256 amount = IERC20(USDC).balanceOf(address(this));
         IERC20(USDC).approve(address(this), amount);
         IERC20(USDC).transferFrom(address(this), msg.sender, amount);
-        emit Withdrawal(msg.sender, amount);
+        emit WithdrawalFromDevelopmentTeam(msg.sender, amount);
     }
 
     function setTeamScoreForCreatorGroup(

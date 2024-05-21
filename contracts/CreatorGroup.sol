@@ -166,7 +166,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         director = members[0];
         numberOfNFT = 0;
         currentDistributeNumber = 0;
-        teamScore = 20;
+        teamScore = 80;
         USDC = _USDC;
     }
 
@@ -351,7 +351,6 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     // Function to distribute revenue from sold NFTs
     function eachDistribution(uint256 id, uint256 valueParam) internal {
         totalEarning += valueParam;
-        console.log("eachDistribution: id-> %d  value-> %d", id, valueParam);
         uint256 count = Recording[id].length;
         uint256 eachTeamScore = ((valueParam * teamScore) / 100) / count;
         uint256 remainingValue = valueParam - eachTeamScore * count;
