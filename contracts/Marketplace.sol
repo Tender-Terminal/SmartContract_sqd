@@ -565,7 +565,7 @@ contract Marketplace {
         recordRevenue(msg.sender, price - loyaltyFee, contractAddress, nftId);
         listedNFTs[listedId].endState = true;
         listedNFTs[listedId].endTime = block.timestamp;
-        offeringSale_balancesForWithdraw[id][buyer] = 0;
+        offeringSale_balancesForWithdraw[id][buyer] -= price;
         emit BuyOfferingSale(
             buyer,
             contractAddress,
