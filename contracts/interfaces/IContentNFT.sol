@@ -8,6 +8,7 @@ interface IContentNFT {
         uint256 timestamp;
     }
     function owner() external view returns (address);
+    function ownerOf(uint256 tokenId) external view returns (address);
     function factory() external view returns (address);
     function nftURIPath(uint256) external view returns (string memory);
     function description() external view returns (string memory);

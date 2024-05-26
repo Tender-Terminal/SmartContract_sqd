@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.3;
+pragma solidity ^0.8.19;
 
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
@@ -614,5 +614,27 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     function getNumberOfBurnTransaction() public view returns (uint256) {
         return transactions_burn.length;
+    }
+
+    function uploadMemberNFT(
+        address contractAddress,
+        uint256 tokenId
+    ) public onlyMembers {
+        require(
+            IContentNFT(contractAddress).ownerOf(tokenId) == msg.sender,
+            "Not owner"
+        );
+        require(getNFTId[contractAddress][tokenId] == 0, "Already uploaded");
+        IContentNFT(contractAddress).transferFrom(
+            msg.sender,
+            address(this),
+            tokenId
+        );
+        nftAddressArr[numberOfNFT] = contractAddress;
+        nftIdArr[numberOfNFT] = tokenId;
+        getNFTId[contractAddress][tokenId] = numberOfNFT;
+        record_member memory tmp = record_member(msg.sender, 0, 0);
+        Recording[numberOfNFT].push(tmp);
+        numberOfNFT++;
     }
 }
