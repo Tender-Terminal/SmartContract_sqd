@@ -100,6 +100,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     // events
     event TeamScoreSet(uint256 value);
     event NFTMinted(address indexed nftAddress, uint256 indexed nftId);
+    event UploadNFTFromMember(address indexed member, address nftContract, uint256 nftId) ;
     event NFTBurned(uint256 indexed nftId);
     event EnglishAuctionListed(
         uint256 indexed nftId,
@@ -360,8 +361,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
             if (Recording[id][i]._sum == 0) {
                 _revenues[i] += remainingValue / count;
             } else {
-                _revenues[i] +=
-                    (remainingValue * Recording[id][i]._percent) /
+                _revenues[i] += (remainingValue * Recording[id][i]._percent) /
                     Recording[id][i]._sum;
             }
         }
@@ -636,5 +636,6 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         record_member memory tmp = record_member(msg.sender, 0, 0);
         Recording[numberOfNFT].push(tmp);
         numberOfNFT++;
+        emit UploadNFTFromMember(msg.sender, contractAddress, tokenId);
     }
 }
