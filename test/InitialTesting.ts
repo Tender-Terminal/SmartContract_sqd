@@ -236,7 +236,7 @@ describe("listing EnglishAuction & biding & endAuction", async function () {
 });
 describe("listing DutchAuction & biding", async function () {
   it("list to Dutch Auction", async function () {
-    await creatorGroup.connect(user1).listToDutchAuction(1, 1000, 100, 28800);
+    await creatorGroup.connect(user1).listToDutchAuction(1, 1000, 100, 5000);
   });
   it("buyer1 buy Dutch Auction", async function () {
     await time.increaseTo((await time.latest()) + 3650);

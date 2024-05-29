@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract CreatorGroup is Initializable, ICreatorGroup {
     // State variables
     address public USDC; // USDC token address
-    IERC20 public immutable USDC_token;
+    IERC20 public USDC_token;
     string public name; // Name of the CreatorGroup
     string public description; // Description of the CreatorGroup
     uint256 public mintFee; // Fee for minting NFTs
@@ -171,7 +171,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         currentDistributeNumber = 0;
         teamScore = 80;
         USDC = _USDC;
-        USDC_token = IERC20(USDC) ;
+        USDC_token = IERC20(USDC);
     }
 
     // Function to add a new member to the CreatorGroup
@@ -202,6 +202,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
 
     // Function to receive loyalty fee and distribute immediately automatically
     function alarmLoyaltyFeeReceived(uint256 nftId, uint256 price) public {
+        require(IContentNFT(msg.sender).creators(nftId) == address(this), "Invalid Alarm!");
         uint256 id = getNFTId[msg.sender][nftId];
         eachDistribution(id, price);
         emit LoyaltyFeeReceived(id, price);
@@ -598,7 +599,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 balanceToWithdraw = balance[msg.sender];
         require(balanceToWithdraw > 0, "No balance to withdraw");
         balance[msg.sender] = 0;
-        USDC_token.safeTransfer(msg.sender, balanceToWithdraw);
+        SafeERC20.safeTransfer(USDC_token, msg.sender, balanceToWithdraw);
         emit withdrawHappened(msg.sender, balanceToWithdraw);
     }
 

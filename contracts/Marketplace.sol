@@ -208,7 +208,7 @@ contract Marketplace {
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint amount = balanceOfDevelopmentTeam;
         balanceOfDevelopmentTeam = 0;
-        USDC_token.SafeTransfer(msg.sender, amount) ;
+        SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         emit Withdrawal(msg.sender, amount);
     }
 
@@ -217,7 +217,7 @@ contract Marketplace {
         require(balanceOfSeller[msg.sender] > 0, "Invalid withdrawer");
         uint amount = balanceOfSeller[msg.sender];
         balanceOfSeller[msg.sender] = 0;
-        USDC_token.SafeTransfer(msg.sender, amount) ;
+        SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         emit Withdrawal(msg.sender, amount);
     }
 
@@ -367,7 +367,7 @@ contract Marketplace {
             sendingValue > price,
             "You should send a price that is more than current price."
         );
-        USDC_token.SafeTransferFrom(msg.sender, address(this), sendingValue) ;
+        SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), sendingValue) ;
         englishAuction_balancesForWithdraw[id][currentWinner] += price;
         englishAuctions[id].currentPrice = sendingValue;
         englishAuctions[id].currentWinner = msg.sender;
@@ -383,7 +383,7 @@ contract Marketplace {
         uint256 amount = englishAuction_balancesForWithdraw[id][msg.sender];
         require(amount > 0, "You don't have any balance.");
         englishAuction_balancesForWithdraw[id][msg.sender] = 0;
-        USDC_token.SafeTransfer(msg.sender, amount);
+        SafeERC20.safeTransfer(USDC_token, msg.sender, amount);
         emit newWithdrawFromEnglishAuction(id, msg.sender, amount);
     }
 
@@ -457,7 +457,7 @@ contract Marketplace {
         address currentOwner = listedNFTs[listedId].currentOwner;
         uint256 price = getDutchAuctionPrice(id);
         require(sendingValue == price, "Not exact fee");
-        USDC_token.safeTransferFrom(msg.sender, address(this), sendingValue);
+        SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), sendingValue);
         uint256 loyaltyFee;
         loyaltyFee = (price * percentForLoyaltyFee) / 100;
         IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
@@ -509,7 +509,7 @@ contract Marketplace {
             "You should send a price that is more than current price."
         );
         offeringSales[id].bidNumber++;
-        USDC_token.safeTransferFrom(msg.sender, address(this), sendingValue);
+        SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), sendingValue);
         offeringSale_currentBids[id][msg.sender] = sendingValue;
         offeringSale_balancesForWithdraw[id][msg.sender] += sendingValue;
         // call the CreatorGroup's function
@@ -535,7 +535,7 @@ contract Marketplace {
         uint256 amount = offeringSale_balancesForWithdraw[id][msg.sender];
         require(amount > 0, "You don't have any balance.");
         offeringSale_balancesForWithdraw[id][msg.sender] = 0;
-        USDC_token.safeTransfer(msg.sender, amount) ;
+        SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         emit newWithdrawFromOfferingSale(id, msg.sender, amount);
     }
 

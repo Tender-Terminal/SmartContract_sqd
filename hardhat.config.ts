@@ -4,7 +4,7 @@ const INFURA_API_KEY = "c4c5cc0e44b745e08e2056827b31ec05" ;
 const SEPOLIA_PRIVATE_KEY = "c04a2b08b8bafb4a72f1e006d3ddb38593de0c6a035129fc5c305fe64da754fe";
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.24",
     settings: {
       optimizer: {
         enabled: true,

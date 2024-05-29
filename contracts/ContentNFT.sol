@@ -20,7 +20,7 @@ contract ContentNFT is ERC721Upgradeable {
     address public USDC; // USDC address
     address public marketplace; // Marketplace address
     //@dev immutables
-    IERC20 public immutable USDC_token;
+    IERC20 public USDC_token;
 
     // Mapping to store the creator address for each NFT token ID
     mapping(uint256 => address) public creators;
@@ -76,7 +76,7 @@ contract ContentNFT is ERC721Upgradeable {
     // Function to mint a new NFT token
     function mint(string memory _nftURI) public payable returns (uint256) {
         // Mint the NFT token
-        USDC_token.safeTransferFrom(msg.sender, factory, mintFee);
+        SafeERC20.safeTransferFrom(USDC_token, msg.sender, factory, mintFee);
         _mint(msg.sender, tokenNumber);
         creators[tokenNumber] = msg.sender;
         transferHistory[tokenNumber].push(
@@ -90,7 +90,7 @@ contract ContentNFT is ERC721Upgradeable {
     // Function to burn an NFT token
     function burn(uint256 tokenId) public payable returns (uint256) {
         // Burn the NFT token
-        USDC_token.safeTransferFrom(msg.sender, factory, burnFee);
+        SafeERC20.safeTransferFrom(USDC_token, msg.sender, factory, burnFee);
         _burn(tokenId);
         emit burned(msg.sender, tokenId);
         return tokenId;
@@ -130,7 +130,7 @@ contract ContentNFT is ERC721Upgradeable {
                 tokenId,
                 loyaltyFee[tokenId]
             );
-            USDC_token.safeTransferFrom(msg.sender, creators[tokenId], loyaltyFee[tokenId]);
+            SafeERC20.safeTransferFrom(USDC_token, msg.sender, creators[tokenId], loyaltyFee[tokenId]);
         }
         transferHistory[tokenId].push(
             TransferHistory(from, to, block.timestamp)
