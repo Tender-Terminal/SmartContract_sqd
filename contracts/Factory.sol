@@ -94,7 +94,7 @@ contract Factory {
         string memory _symbol,
         string memory _description
     ) public returns (address) {
-        SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), mintFee);
+        if(mintFee > 0) SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), mintFee);
         address newDeployedAddress = Clones.clone(implementContent);
         IContentNFT(newDeployedAddress).initialize(
             _name,
@@ -120,7 +120,7 @@ contract Factory {
     function withdraw() public {
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint256 amount = IERC20(USDC).balanceOf(address(this));
-        SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
+        if(amount > 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         emit WithdrawalFromDevelopmentTeam(msg.sender, amount);
     }
 
