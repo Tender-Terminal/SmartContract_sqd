@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./interfaces/ICreatorGroup.sol";
 import "./interfaces/IContentNFT.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 
 contract Factory {
     // State variables
@@ -21,6 +23,7 @@ contract Factory {
     uint256 public mintFee; // Fee required for minting NFTs
     uint256 public burnFee; // Fee required for burning NFTs
     address public USDC; // Address of the USDC token contract
+    IERC20 public immutable USDC_token;
     address[] public agencies; // Array to store addresses of agencies associated with the contract
     // Modifier to restrict access to only the contract owner
     modifier onlyOwner() {
@@ -57,6 +60,7 @@ contract Factory {
         implementGroup = _implementGroup;
         implementContent = _implementContent;
         USDC = _USDC;
+        USDC_token = IERC20(_USDC);
     }
 
     // Function to create a new group
@@ -90,7 +94,7 @@ contract Factory {
         string memory _symbol,
         string memory _description
     ) public returns (address) {
-        IERC20(USDC).transferFrom(msg.sender, address(this), mintFee);
+        USDC_token.safeTransferFrom(msg.sender, address(this), mintFee);
         address newDeployedAddress = Clones.clone(implementContent);
         IContentNFT(newDeployedAddress).initialize(
             _name,
@@ -116,8 +120,7 @@ contract Factory {
     function withdraw() public {
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint256 amount = IERC20(USDC).balanceOf(address(this));
-        IERC20(USDC).approve(address(this), amount);
-        IERC20(USDC).transferFrom(address(this), msg.sender, amount);
+        USDC_token.safeTransfer(msg.sender, amount) ;
         emit WithdrawalFromDevelopmentTeam(msg.sender, amount);
     }
 

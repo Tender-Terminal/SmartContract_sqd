@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICreatorGroup} from "./interfaces/ICreatorGroup.sol";
 
@@ -18,6 +19,8 @@ contract ContentNFT is ERC721Upgradeable {
     uint256 public burnFee; // Fee required for burning
     address public USDC; // USDC address
     address public marketplace; // Marketplace address
+    //@dev immutables
+    IERC20 public immutable USDC_token;
 
     // Mapping to store the creator address for each NFT token ID
     mapping(uint256 => address) public creators;
@@ -65,6 +68,7 @@ contract ContentNFT is ERC721Upgradeable {
         );
         setTokenURI(_nftURI);
         USDC = _USDC;
+        USDC_token = IERC20(_USDC);
         marketplace = _marketplace;
         emit minted(owner, 0, _nftURI);
     }
@@ -72,7 +76,7 @@ contract ContentNFT is ERC721Upgradeable {
     // Function to mint a new NFT token
     function mint(string memory _nftURI) public payable returns (uint256) {
         // Mint the NFT token
-        IERC20(USDC).transferFrom(msg.sender, factory, mintFee);
+        USDC_token.safeTransferFrom(msg.sender, factory, mintFee);
         _mint(msg.sender, tokenNumber);
         creators[tokenNumber] = msg.sender;
         transferHistory[tokenNumber].push(
@@ -86,7 +90,7 @@ contract ContentNFT is ERC721Upgradeable {
     // Function to burn an NFT token
     function burn(uint256 tokenId) public payable returns (uint256) {
         // Burn the NFT token
-        IERC20(USDC).transferFrom(msg.sender, factory, burnFee);
+        USDC_token.safeTransferFrom(msg.sender, factory, burnFee);
         _burn(tokenId);
         emit burned(msg.sender, tokenId);
         return tokenId;
@@ -126,11 +130,7 @@ contract ContentNFT is ERC721Upgradeable {
                 tokenId,
                 loyaltyFee[tokenId]
             );
-            IERC20(USDC).transferFrom(
-                msg.sender,
-                creators[tokenId],
-                loyaltyFee[tokenId]
-            );
+            USDC_token.safeTransferFrom(msg.sender, creators[tokenId], loyaltyFee[tokenId]);
         }
         transferHistory[tokenId].push(
             TransferHistory(from, to, block.timestamp)
