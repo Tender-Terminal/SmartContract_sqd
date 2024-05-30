@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-// Uncomment this line to use console.log
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/ICreatorGroup.sol";
 import "./interfaces/IFactory.sol";
@@ -73,46 +72,46 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     // events
     event TeamScoreSet(uint256 value);
     event NFTMinted(address indexed nftAddress, uint256 indexed nftId);
-    event UploadNFTFromMember(address indexed member, address nftContract, uint256 nftId) ;
+    event UploadNFTFromMember(address indexed member, address indexed nftContract, uint256 indexed nftId) ;
     event NFTBurned(uint256 indexed nftId);
     event EnglishAuctionListed(
         uint256 indexed nftId,
-        uint256 initialPrice,
-        uint256 salePeriod
+        uint256 indexed initialPrice,
+        uint256 indexed salePeriod
     );
     event DutchAuctionListed(
         uint256 indexed nftId,
-        uint256 initialPrice,
-        uint256 reducingRate,
+        uint256 indexed initialPrice,
+        uint256 indexed reducingRate,
         uint256 salePeriod
     );
-    event OfferingSaleListed(uint256 indexed nftId, uint256 initialPrice);
+    event OfferingSaleListed(uint256 indexed nftId, uint256 indexed initialPrice);
     event EnglishAuctionEnded(uint256 indexed nftId);
     event WithdrawalFromMarketplace();
     event DirectorSettingProposed(address indexed _candidate);
     event DirectorSettingExecuted(address indexed _director);
     event DirectorSettingConfirmed(
         uint256 indexed index,
-        address from,
-        bool state
+        address indexed from,
+        bool indexed state
     );
     event OfferingSaleTransactionProposed(
         address indexed _tokenContractAddress,
-        uint256 tokenId,
-        address _buyer,
+        uint256 indexed tokenId,
+        address indexed _buyer,
         uint256 _price
     );
     event OfferingSaleTransactionConfirmed(
         uint256 indexed index,
-        address from,
-        bool state
+        address indexed from,
+        bool indexed state
     );
     event OfferingSaleTransactionExecuted(uint256 indexed index);
     event ConfirmationRequiredNumberSet(uint256 indexed confirmNumber);
-    event WithdrawHappened(address indexed from, uint256 balanceToWithdraw);
-    event LoyaltyFeeReceived(uint256 id, uint256 price);
-    event BurnTransactionProposed(uint256 id);
-    event BurnTransactionConfirmed(uint256 index, address from, bool state);
+    event WithdrawHappened(address indexed from, uint256 indexed balanceToWithdraw);
+    event LoyaltyFeeReceived(uint256 indexed id, uint256 indexed price);
+    event BurnTransactionProposed(uint256 indexed id);
+    event BurnTransactionConfirmed(uint256 indexed index, address indexed from, bool indexed state);
     // Modifier to restrict access to only director
     modifier onlyDirector() {
         require(
