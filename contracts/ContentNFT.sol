@@ -63,10 +63,10 @@ contract ContentNFT is ERC721Upgradeable {
             TransferHistory(address(0), owner, block.timestamp)
         );
         _setTokenURI(_nftURI);
-        require(_USDC!= address(0), "USDC address cannot be 0");
+        require(_USDC!=address(0), "USDC address cannot be 0");
         USDC = _USDC;
         USDC_token = IERC20(_USDC);
-        require(_marketplace!= address(0), "marketplace address cannot be 0");
+        require(_marketplace!=address(0),"marketplace address cannot be 0");
         marketplace = _marketplace;
         emit minted(owner, 0, _nftURI);
     }
