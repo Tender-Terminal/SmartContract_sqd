@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/ICreatorGroup.sol";
@@ -530,7 +530,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 tokenId = nftIdArr[id];
         USDC_token.approve(nftAddress, burnFee);
         uint256 burnedId = IContentNFT(nftAddress).burn(tokenId);
-        require(burnedId == tokenId, "Not match burned ID") ;
+        require(burnedId == tokenId, "Not match burned ID");
         nftIdArr[id] = nftIdArr[numberOfNFT - 1];
         delete nftIdArr[numberOfNFT - 1];
         nftAddressArr[id] = nftAddressArr[numberOfNFT - 1];

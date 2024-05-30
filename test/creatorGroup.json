@@ -1,5 +1,32 @@
 [
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+      }
+    ],
+    "name": "AddressEmptyCode",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "AddressInsufficientBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FailedInnerCall",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
@@ -10,22 +37,33 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "index",
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "from",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "bool",
         "name": "state",
         "type": "bool"
@@ -38,7 +76,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
@@ -70,13 +108,13 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "from",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "bool",
         "name": "state",
         "type": "bool"
@@ -121,13 +159,13 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "initialPrice",
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "reducingRate",
         "type": "uint256"
@@ -165,13 +203,13 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "initialPrice",
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "salePeriod",
         "type": "uint256"
@@ -197,13 +235,13 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "price",
         "type": "uint256"
@@ -254,7 +292,7 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "initialPrice",
         "type": "uint256"
@@ -273,13 +311,13 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "from",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "bool",
         "name": "state",
         "type": "bool"
@@ -311,13 +349,13 @@
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "_buyer",
         "type": "address"
@@ -347,8 +385,27 @@
   },
   {
     "anonymous": false,
-    "inputs": [],
-    "name": "WithdrawalFromMarketplace",
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "member",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "nftContract",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "nftId",
+        "type": "uint256"
+      }
+    ],
+    "name": "UploadNFTFromMember",
     "type": "event"
   },
   {
@@ -361,13 +418,19 @@
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "balanceToWithdraw",
         "type": "uint256"
       }
     ],
-    "name": "withdrawHappened",
+    "name": "WithdrawHappened",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "WithdrawalFromMarketplace",
     "type": "event"
   },
   {
@@ -410,6 +473,19 @@
     "outputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "USDC_token",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -1594,6 +1670,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "uploadMemberNFT",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
