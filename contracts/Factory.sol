@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 // Uncomment this line to use console.log
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./interfaces/ICreatorGroup.sol";
