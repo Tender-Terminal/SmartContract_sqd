@@ -25,12 +25,13 @@ contract Factory {
     // Events
     event GroupCreated(
         address indexed creator,
-        string name,
-        string description,
+        string indexed name,
+        string indexed description,
         address newDeployedAddress
     );
     event NewNFTMinted(address indexed creator, address indexed nftAddress);
     event WithdrawalFromDevelopmentTeam(address indexed withdrawer, uint256 indexed amount);
+    event TeamScoreChanged(address indexed teamMember, uint256 indexed score);
         // Modifier to restrict access to only the contract owner
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -57,13 +58,18 @@ contract Factory {
         address _USDC
     ) {
         owner = msg.sender;
+        require(_marketplace!= address(0), "marketplace address cannot be 0");
         marketplace = _marketplace;
+        require(_developmentTeam!= address(0), "development team address cannot be 0");
         developmentTeam = _developmentTeam;
         numberOfCreators = 0;
         mintFee = _mintFee;
         burnFee = _burnFee;
+        require(_implementGroup != address(0), "group implementation address cannot be 0");
         implementGroup = _implementGroup;
+        require(_implementContent!= address(0), "content implementation address cannot be 0");
         implementContent = _implementContent;
+        require(_USDC != address(0), "USDC address cannot be 0");
         USDC = _USDC;
         USDC_token = IERC20(_USDC);
     }
@@ -99,10 +105,12 @@ contract Factory {
         string memory _symbol,
         string memory _description
     ) external onlyGroup returns (address) {
-
+        uint256 beforeBalance = USDC_token.balanceOf(address(this));
         if(mintFee > 0) {
             SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), mintFee);
         }
+        uint256 afterBalance = USDC_token.balanceOf(address(this));
+        require(afterBalance - beforeBalance >= mintFee, "Not enough funds to pay the mint fee");
         address newDeployedAddress = Clones.clone(implementContent);
         IContentNFT(newDeployedAddress).initialize(
             _name,
@@ -139,5 +147,6 @@ contract Factory {
         uint256 score
     ) external onlyOwner {
         ICreatorGroup(Creators[id]).setTeamScore(score);
+        emit TeamScoreChanged(Creators[id], score);
     }
 }
