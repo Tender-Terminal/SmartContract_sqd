@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// Uncomment this line to use console.log
-import "hardhat/console.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ICreatorGroup.sol";
@@ -11,22 +9,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 
 contract Marketplace {
-    address public owner; // Address of the contract owner
-    address public developmentTeam; // Address of the development team
-    uint256 public balanceOfDevelopmentTeam; // Balance of the development team
-    uint256 public percentForSeller; // Percentage of the Seller
-    uint256 public percentForLoyaltyFee; // Percentage of the loyalty fee
-    mapping(address => uint256) public balanceOfUser; // Balance of the user
-    address public USDC; // Address of the USDC
-    IERC20 public immutable USDC_token;
-    mapping(address => uint256) public balanceOfSeller; // Balance of the seller
     // Enum defining different sale types
     enum SaleType {
         ENGLISH_AUCTION,
         DUTCH_AUCTION,
         OFFERING_SALE
     }
-
     // Struct to represent a listed NFT
     struct listedNFT {
         SaleType _saleType;
@@ -38,10 +26,6 @@ contract Marketplace {
         uint256 endTime;
         bool endState;
     }
-
-    listedNFT[] public listedNFTs; // Array to store listed NFTs
-    mapping(uint256 => bool) public cancelListingState; // Array to store state of cancelListing
-
     // Struct to handle English auction details
     struct englishAuction {
         uint256 initialPrice;
@@ -49,96 +33,100 @@ contract Marketplace {
         address currentWinner;
         uint256 currentPrice;
     }
-    mapping(uint256 => mapping(address => uint256))
-        public englishAuction_balancesForWithdraw; // Mapping to store balances available for withdrawal in English auctions
-
-    englishAuction[] public englishAuctions; // Array to store instances of English auction contracts
-    mapping(uint256 => uint256) public englishAuction_listedNumber; // Mapping to track the number of items listed in each English auction
-
     // Struct to handle Dutch auction details
     struct dutchAuction {
         uint256 initialPrice;
         uint256 reducingRate;
         uint256 salePeriod;
     }
-
-    dutchAuction[] public dutchAuctions; // Array to store instances of Dutch auction contracts
-    mapping(uint256 => uint256) public dutchAuction_listedNumber; // Mapping to track the number of items listed in each Dutch auction
-
     // Strcut to handle Offering Sale details
     struct offeringSale {
         uint256 initialPrice;
         uint256 bidNumber;
     }
-    mapping(uint256 => mapping(address => uint256))
-        public offeringSale_balancesForWithdraw; // Mapping to store balances available for withdrawal in offering sales
+    // State variables
+    address public owner; // Address of the contract owner
+    address public developmentTeam; // Address of the development team
+    uint256 public balanceOfDevelopmentTeam; // Balance of the development team
+    uint256 public percentForSeller; // Percentage of the Seller
+    uint256 public percentForLoyaltyFee; // Percentage of the loyalty fee
+    mapping(address => uint256) public balanceOfUser; // Balance of the user
+    address public USDC; // Address of the USDC
+    IERC20 public immutable USDC_token;
+    mapping(address => uint256) public balanceOfSeller; // Balance of the seller
+    listedNFT[] public listedNFTs; // Array to store listed NFTs
+    mapping(uint256 => bool) public cancelListingState; // Array to store state of cancelListing
+    mapping(uint256 => mapping(address => uint256)) public englishAuction_balancesForWithdraw; // Mapping to store balances available for withdrawal in English auctions
+    englishAuction[] public englishAuctions; // Array to store instances of English auction contracts
+    mapping(uint256 => uint256) public englishAuction_listedNumber; // Mapping to track the number of items listed in each English auction
+    dutchAuction[] public dutchAuctions; // Array to store instances of Dutch auction contracts
+    mapping(uint256 => uint256) public dutchAuction_listedNumber; // Mapping to track the number of items listed in each Dutch auction
+    mapping(uint256 => mapping(address => uint256)) public offeringSale_balancesForWithdraw; // Mapping to store balances available for withdrawal in offering sales
     mapping(uint256 => mapping(address => uint256)) offeringSale_currentBids; // Mapping to store current bids in offering sales
     offeringSale[] public offeringSales; // Array to store instances of offering sale contracts
     mapping(uint256 => uint256) public offeringSale_listedNumber; // Mapping to track the number of items listed in each offering sale
-
+    //event
+    event BuyEnglishAuction(
+        address indexed buyer,
+        address indexed contractAddress,
+        uint256 indexed nftId,
+        uint256 price,
+        uint256 time
+    );
+    event BuyDutchAuction(
+        address indexed buyer,
+        address indexed contractAddress,
+        uint256 indexed nftId,
+        uint256 price,
+        uint256 time
+    );
+    event BuyOfferingSale(
+        address indexed buyer,
+        address indexed contractAddress,
+        uint256 indexed nftId,
+        uint256 price,
+        uint256 time
+    );
+    event Withdrawal(address indexed withdrawer, uint256 indexed amount);
+    event DevelopmentTeamSet(address indexed _developmentTeam);
+    event PercentForSellerSet(uint256 indexed _percentForSeller);
+    event NewEnglishAuctionListing(
+        address indexed _nftContractAddress,
+        uint256 indexed _nftId,
+        uint256 indexed _initialPrice,
+        uint256 _salePeriod
+    );
+    event NewDutchAuctionListing(
+        address indexed _nftContractAddress,
+        uint256 indexed nftId,
+        uint256 indexed initialPrice,
+        uint256 reducingRate,
+        uint256 salePeriod
+    );
+    event NewOfferingSaleListing(
+        address indexed nftContractAddress,
+        uint256 indexed nftId,
+        uint256 indexed initialPrice
+    );
+    event NewBidToEnglishAuction(
+        uint256 indexed id,
+        uint256 indexed sendingValue,
+        address indexed currentWinner
+    );
+    event NewWithdrawFromEnglishAuction(
+        uint256 indexed id,
+        address indexed from,
+        uint256 indexed amount
+    );
+    event NewBidToOfferingSale(uint256 indexed id, address indexed from, uint256 indexed sendingValue);
+    event NewWithdrawFromOfferingSale(uint256 indexed id, address indexed from, uint256 indexed amount);
+    event CanceledListing(uint256 indexed id, address indexed from);
+    event PercentForLoyaltyFeeSet(uint256 indexed value);
     // Modifier to restrict access to only the contract owner
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
         _;
     }
-
-    event BuyEnglishAuction(
-        address buyer,
-        address contractAddress,
-        uint256 nftId,
-        uint256 price,
-        uint256 time
-    );
-    event BuyDutchAuction(
-        address buyer,
-        address contractAddress,
-        uint256 nftId,
-        uint256 price,
-        uint256 time
-    );
-    event BuyOfferingSale(
-        address buyer,
-        address contractAddress,
-        uint256 nftId,
-        uint256 price,
-        uint256 time
-    );
-    event Withdrawal(address indexed withdrawer, uint256 amount);
-    event developmentTeamSet(address indexed _developmentTeam);
-    event percentForSellerSet(uint256 _percentForSeller);
-    event newEnglishAuctionListing(
-        address _nftContractAddress,
-        uint256 _nftId,
-        uint256 _initialPrice,
-        uint256 _salePeriod
-    );
-    event newDutchAuctionListing(
-        address _nftContractAddress,
-        uint256 nftId,
-        uint256 initialPrice,
-        uint256 reducingRate,
-        uint256 salePeriod
-    );
-    event newOfferingSaleListing(
-        address nftContractAddress,
-        uint256 nftId,
-        uint256 initialPrice
-    );
-    event newBidToEnglishAuction(
-        uint256 id,
-        uint256 sendingValue,
-        address currentWinner
-    );
-    event newWithdrawFromEnglishAuction(
-        uint256 id,
-        address from,
-        uint256 amount
-    );
-    event newBidToOfferingSale(uint256 id, address from, uint256 sendingValue);
-    event newWithdrawFromOfferingSale(uint256 id, address from, uint256 amount);
-    event canceledListing(uint256 id, address from);
-    event percentForLoyaltyFeeSet(uint256 value);
-
     // Constructor to set the development team address
     constructor(
         address _developmentTeam,
@@ -146,16 +134,19 @@ contract Marketplace {
         address _USDC
     ) {
         owner = msg.sender;
+        require(_developmentTeam!= address(0), "Invalid address");
         developmentTeam = _developmentTeam;
+        require(_percentForSeller <= 100 && _percentForSeller >= 0, "Invalid percentage");
         percentForSeller = _percentForSeller;
         balanceOfDevelopmentTeam = 0;
+         require(_USDC!= address(0), "Invalid address");
         USDC = _USDC;
         USDC_token = IERC20(USDC) ;
         percentForLoyaltyFee = 5;
     }
 
     // Function to get the balance of a specific user
-    function getBalanceOfUser(address to) public view returns (uint256) {
+    function getBalanceOfUser(address to) external view returns (uint256) {
         return balanceOfUser[to];
     }
 
@@ -165,7 +156,7 @@ contract Marketplace {
         uint256[] memory _values,
         address contractAddress,
         uint256 nftId
-    ) public {
+    ) external {
         bool flag = false;
         for (uint256 i = 0; i < listedNFTs.length; i++) {
             if (
@@ -185,26 +176,26 @@ contract Marketplace {
     }
 
     // Function to set the development team address (only callable by the owner)
-    function setDevelopmentTeam(address _developmentTeam) public onlyOwner {
+    function setDevelopmentTeam(address _developmentTeam) external onlyOwner {
         developmentTeam = _developmentTeam;
-        emit developmentTeamSet(developmentTeam);
+        emit DevelopmentTeamSet(developmentTeam);
     }
 
     // Function to set the percentage for seller (only callable by the owner)
-    function setPercentForSeller(uint256 _percentForSeller) public onlyOwner {
+    function setPercentForSeller(uint256 _percentForSeller) external onlyOwner {
         percentForSeller = _percentForSeller;
-        emit percentForSellerSet(percentForSeller);
+        emit PercentForSellerSet(percentForSeller);
     }
 
     function setPercentForLoyaltyFee(
         uint256 _percentForLoyaltyFee
-    ) public onlyOwner {
+    ) external onlyOwner {
         percentForLoyaltyFee = _percentForLoyaltyFee;
-        emit percentForLoyaltyFeeSet(percentForLoyaltyFee);
+        emit PercentForLoyaltyFeeSet(percentForLoyaltyFee);
     }
 
     // Function to withdraw funds from the contract (only callable by the development team)
-    function withdraw() public {
+    function withdraw() external {
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint amount = balanceOfDevelopmentTeam;
         balanceOfDevelopmentTeam = 0;
@@ -213,7 +204,7 @@ contract Marketplace {
     }
 
     // Function to withdraw funds from a seller's balance
-    function withdrawFromSeller() public {
+    function withdrawFromSeller() external {
         require(balanceOfSeller[msg.sender] > 0, "Invalid withdrawer");
         uint amount = balanceOfSeller[msg.sender];
         balanceOfSeller[msg.sender] = 0;
@@ -240,7 +231,7 @@ contract Marketplace {
         uint256 nftId,
         uint256 initialPrice,
         uint256 salePeriod
-    ) public {
+    ) external {
         require(
             checkOwnerOfNFT(nftContractAddress, nftId) == true,
             "Invalid token owner"
@@ -265,7 +256,7 @@ contract Marketplace {
         );
         englishAuction_listedNumber[id] = listedNFTs.length;
         listedNFTs.push(newListing);
-        emit newEnglishAuctionListing(
+        emit NewEnglishAuctionListing(
             nftContractAddress,
             nftId,
             initialPrice,
@@ -280,7 +271,7 @@ contract Marketplace {
         uint256 initialPrice,
         uint256 reducingRate,
         uint256 salePeriod
-    ) public {
+    ) external {
         require(
             checkOwnerOfNFT(nftContractAddress, nftId) == true,
             "Invalid token owner"
@@ -304,7 +295,7 @@ contract Marketplace {
         );
         dutchAuction_listedNumber[id] = listedNFTs.length;
         listedNFTs.push(newListing);
-        emit newDutchAuctionListing(
+        emit NewDutchAuctionListing(
             nftContractAddress,
             nftId,
             initialPrice,
@@ -318,7 +309,7 @@ contract Marketplace {
         address nftContractAddress,
         uint256 nftId,
         uint256 initialPrice
-    ) public {
+    ) external {
         require(
             checkOwnerOfNFT(nftContractAddress, nftId) == true,
             "Invalid token owner"
@@ -338,7 +329,7 @@ contract Marketplace {
         );
         offeringSale_listedNumber[id] = listedNFTs.length;
         listedNFTs.push(newListing);
-        emit newOfferingSaleListing(nftContractAddress, nftId, initialPrice);
+        emit NewOfferingSaleListing(nftContractAddress, nftId, initialPrice);
     }
 
     // Function to check the owner of an NFT
@@ -351,7 +342,7 @@ contract Marketplace {
     }
 
     // Function for a user to bid in an English auction
-    function makeBidToEnglishAuction(uint256 id, uint256 sendingValue) public {
+    function makeBidToEnglishAuction(uint256 id, uint256 sendingValue) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             englishAuctions.length > id,
@@ -371,11 +362,11 @@ contract Marketplace {
         englishAuction_balancesForWithdraw[id][currentWinner] += price;
         englishAuctions[id].currentPrice = sendingValue;
         englishAuctions[id].currentWinner = msg.sender;
-        emit newBidToEnglishAuction(id, sendingValue, currentWinner);
+        emit NewBidToEnglishAuction(id, sendingValue, currentWinner);
     }
 
     // Function to withdraw funds from an English auction
-    function withdrawFromEnglishAuction(uint256 id) public {
+    function withdrawFromEnglishAuction(uint256 id) external {
         require(
             englishAuctions.length > id,
             "Not listed in the english auction list."
@@ -384,11 +375,11 @@ contract Marketplace {
         require(amount > 0, "You don't have any balance.");
         englishAuction_balancesForWithdraw[id][msg.sender] = 0;
         SafeERC20.safeTransfer(USDC_token, msg.sender, amount);
-        emit newWithdrawFromEnglishAuction(id, msg.sender, amount);
+        emit NewWithdrawFromEnglishAuction(id, msg.sender, amount);
     }
 
     // Function to end an English auction
-    function endEnglishAuction(address _nftAddress, uint256 _nftId) public {
+    function endEnglishAuction(address _nftAddress, uint256 _nftId) external {
         uint256 id;
         bool flg = false;
         for (uint256 i = 0; i < englishAuctions.length; i++) {
@@ -444,7 +435,7 @@ contract Marketplace {
     }
 
     // Function for a user to buy in a Dutch auction
-    function buyDutchAuction(uint256 id, uint256 sendingValue) public {
+    function buyDutchAuction(uint256 id, uint256 sendingValue) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             dutchAuctions.length > id,
@@ -492,7 +483,7 @@ contract Marketplace {
     }
 
     // Function for a user to bid in an offering sale
-    function makeBidToOfferingSale(uint256 id, uint256 sendingValue) public {
+    function makeBidToOfferingSale(uint256 id, uint256 sendingValue) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             offeringSales.length > id,
@@ -520,11 +511,11 @@ contract Marketplace {
             msg.sender,
             sendingValue
         );
-        emit newBidToOfferingSale(id, msg.sender, sendingValue);
+        emit NewBidToOfferingSale(id, msg.sender, sendingValue);
     }
 
     // Function to withdraw funds from an offering sale
-    function withdrawFromOfferingSale(uint256 id) public {
+    function withdrawFromOfferingSale(uint256 id) external {
         require(
             offeringSales.length > id,
             "Not listed in the offering sale list."
@@ -536,11 +527,11 @@ contract Marketplace {
         require(amount > 0, "You don't have any balance.");
         offeringSale_balancesForWithdraw[id][msg.sender] = 0;
         if(amount > 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
-        emit newWithdrawFromOfferingSale(id, msg.sender, amount);
+        emit NewWithdrawFromOfferingSale(id, msg.sender, amount);
     }
 
     // Function to end an offering sale
-    function endOfferingSale(uint256 id, address buyer) public {
+    function endOfferingSale(uint256 id, address buyer) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             offeringSales.length > id,
@@ -576,7 +567,7 @@ contract Marketplace {
     }
 
     // Function to cancel a listing
-    function cancelListing(address _nftContractAddress, uint256 _nftId) public {
+    function cancelListing(address _nftContractAddress, uint256 _nftId) external {
         require(
             checkOwnerOfNFT(_nftContractAddress, _nftId) == true,
             "only the nft owner can call this function"
@@ -605,36 +596,36 @@ contract Marketplace {
             "Already sale offering started!"
         );
         cancelListingState[id] = true;
-        emit canceledListing(id, msg.sender);
+        emit CanceledListing(id, msg.sender);
     }
 
-    function getListedNumber() public view returns (uint256) {
+    function getListedNumber() external view returns (uint256) {
         return listedNFTs.length;
     }
 
-    function getListedEnglishAuctionNumber() public view returns (uint256) {
+    function getListedEnglishAuctionNumber() external view returns (uint256) {
         return englishAuctions.length;
     }
 
-    function getListedDutchAuctionNumber() public view returns (uint256) {
+    function getListedDutchAuctionNumber() external view returns (uint256) {
         return dutchAuctions.length;
     }
 
-    function getOfferingSaleAuctionNumber() public view returns (uint256) {
+    function getOfferingSaleAuctionNumber() external view returns (uint256) {
         return offeringSales.length;
     }
 
     function withdrawBalanceForEnglishAuction(
         uint256 id,
         address to
-    ) public view returns (uint256) {
+    ) external view returns (uint256) {
         return englishAuction_balancesForWithdraw[id][to];
     }
 
     function withdrawBalanceForOfferingSale(
         uint256 id,
         address to
-    ) public view returns (uint256) {
+    ) external view returns (uint256) {
         return offeringSale_balancesForWithdraw[id][to];
     }
 }
