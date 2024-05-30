@@ -160,6 +160,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         }
         numberOfMembers = _members.length;
         numConfirmationRequired = _numConfirmationRequired;
+        require(_marketplace != address(0), "Invalid Marketplace Address");
         marketplace = _marketplace;
         mintFee = _mintFee;
         burnFee = _burnFee;
@@ -168,6 +169,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         numberOfNFT = 0;
         currentDistributeNumber = 0;
         teamScore = 80;
+        require(_USDC != address(0), "Invalid USDC Address");
         USDC = _USDC;
         USDC_token = IERC20(USDC);
     }
@@ -183,7 +185,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function removeMember(address _removeMember) external onlyMembers {
         require(isOwner[_removeMember] == true, "It's not a member!");
         delete isOwner[_removeMember];
-        uint256 id;
+        uint256 id = 0;
         for (uint256 i = 0; i < members.length; i++) {
             if (members[i] == _removeMember) id = i;
         }
@@ -236,7 +238,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         string memory _symbol,
         string memory _description
     ) external onlyDirector {
-        IERC20(USDC).approve(factory, mintFee);
+        USDC_token.approve(factory, mintFee);
         address nftAddress = IFactory(factory).mintNew(
             _nftURI,
             _name,
@@ -259,7 +261,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         string memory _nftURI,
         address _targetNFT
     ) external onlyDirector {
-        IERC20(USDC).approve(_targetNFT, mintFee);
+        USDC_token.approve(_targetNFT, mintFee);
         nftIdArr[numberOfNFT] = IContentNFT(_targetNFT).mint(_nftURI);
         nftAddressArr[numberOfNFT] = _targetNFT;
         getNFTId[_targetNFT][nftIdArr[numberOfNFT]] = numberOfNFT;
@@ -355,6 +357,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function eachDistribution(uint256 id, uint256 valueParam) internal {
         totalEarning += valueParam;
         uint256 count = Recording[id].length;
+        require(count > 0, "No members to distribute");
         uint256 eachTeamScore = ((valueParam * teamScore) / 100) / count;
         uint256 remainingValue = valueParam - eachTeamScore * count;
         uint256[] memory _revenues = new uint256[](count);
@@ -526,8 +529,9 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 id = transactions_burn[index].id;
         address nftAddress = nftAddressArr[id];
         uint256 tokenId = nftIdArr[id];
-        IERC20(USDC).approve(nftAddress, burnFee);
-        IContentNFT(nftAddress).burn(tokenId);
+        USDC_token.approve(nftAddress, burnFee);
+        uint256 burnedId = IContentNFT(nftAddress).burn(tokenId);
+        require(burnedId == tokenId, "Not match burned ID") ;
         nftIdArr[id] = nftIdArr[numberOfNFT - 1];
         delete nftIdArr[numberOfNFT - 1];
         nftAddressArr[id] = nftAddressArr[numberOfNFT - 1];
