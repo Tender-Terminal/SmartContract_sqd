@@ -51,7 +51,7 @@ contract Marketplace {
     uint256 public percentForLoyaltyFee; // Percentage of the loyalty fee
     mapping(address => uint256) public balanceOfUser; // Balance of the user
     address public USDC; // Address of the USDC
-    IERC20 public immutable USDC_token;
+    IERC20 public immutable USDC_token; // USDC token contract
     mapping(address => uint256) public balanceOfSeller; // Balance of the seller
     listedNFT[] public listedNFTs; // Array to store listed NFTs
     mapping(uint256 => bool) public cancelListingState; // Array to store state of cancelListing
@@ -126,7 +126,10 @@ contract Marketplace {
         require(msg.sender == owner, "Only owner can call this function");
         _;
     }
-    // Constructor to set the development team address
+    /// @notice Constructor to set the development team address
+    /// @param _developmentTeam Address of the development team
+    /// @param _percentForSeller Revenue Percentage for the seller of the sold NFT
+    /// @param _USDC Address of the USDC token
     constructor(
         address _developmentTeam,
         uint256 _percentForSeller,
@@ -144,12 +147,18 @@ contract Marketplace {
         percentForLoyaltyFee = 5;
     }
 
-    // Function to get the balance of a specific user
+    /// @notice Function to get the balance of a specific user
+    /// @param to Address to get the balance of user
+    /// @return The balance of a specific user
     function getBalanceOfUser(address to) external view returns (uint256) {
         return balanceOfUser[to];
     }
 
-    // Function to add balance to multiple users
+    /// @notice Function to add balance to multiple users
+    /// @param _members Array of addresses to add balance
+    /// @param _values Array of values to add to the balance of each user
+    /// @param contractAddress Address of the NFT contract
+    /// @param nftId TokenId of the NFT contract
     function addBalanceOfUser(
         address[] memory _members,
         uint256[] memory _values,
@@ -174,18 +183,25 @@ contract Marketplace {
         }
     }
 
-    // Function to set the development team address (only callable by the owner)
+    /// @notice Function to set the development team address
+    /// @param _developmentTeam Address of the development team
+    /// @dev Only callable by the owner
     function setDevelopmentTeam(address _developmentTeam) external onlyOwner {
         developmentTeam = _developmentTeam;
         emit DevelopmentTeamSet(developmentTeam);
     }
 
-    // Function to set the percentage for seller (only callable by the owner)
+    /// @notice Function to set the percentage for seller
+    /// @param _percentForSeller Revenue Percentage for the seller of the sold NFT
+    /// @dev Only callable by the owner
     function setPercentForSeller(uint256 _percentForSeller) external onlyOwner {
         percentForSeller = _percentForSeller;
         emit PercentForSellerSet(percentForSeller);
     }
 
+    /// @notice Function to set the percentage for Loyalty Fee
+    /// @param _percentForLoyaltyFee Percentage for Loyalty Fee
+    /// @dev Only callable by the owner
     function setPercentForLoyaltyFee(
         uint256 _percentForLoyaltyFee
     ) external onlyOwner {
@@ -193,7 +209,7 @@ contract Marketplace {
         emit PercentForLoyaltyFeeSet(percentForLoyaltyFee);
     }
 
-    // Function to withdraw funds from the contract (only callable by the development team)
+    /// @notice Function to withdraw funds from the contract
     function withdraw() external {
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint amount = balanceOfDevelopmentTeam;
@@ -202,7 +218,7 @@ contract Marketplace {
         emit Withdrawal(msg.sender, amount);
     }
 
-    // Function to withdraw funds from a seller's balance
+    /// @notice Function to withdraw funds from a seller's balance
     function withdrawFromSeller() external {
         require(balanceOfSeller[msg.sender] > 0, "Invalid withdrawer");
         uint amount = balanceOfSeller[msg.sender];
@@ -211,7 +227,11 @@ contract Marketplace {
         emit Withdrawal(msg.sender, amount);
     }
 
-    // Function to record revenue from a sale
+    /// @notice Function to record revenue from a sale
+    /// @param seller Address of the seller
+    /// @param price Price of the NFT
+    /// @param contractAddress Address of the NFT contract
+    /// @param nftId TokenId of the NFT contract
     function recordRevenue(
         address seller,
         uint256 price,
@@ -224,7 +244,11 @@ contract Marketplace {
         ICreatorGroup(seller).alarmSoldOut(contractAddress, nftId, value);
     }
 
-    // Function to list an NFT to an English auction
+    /// @notice Function to list an NFT to an English auction
+    /// @param nftContractAddress Address of the NFT contract
+    /// @param nftId TokenId of the NFT contract
+    /// @param initialPrice Initial price of the NFT
+    /// @param salePeriod Sale period of the NFT
     function listToEnglishAuction(
         address nftContractAddress,
         uint256 nftId,
@@ -263,7 +287,12 @@ contract Marketplace {
         );
     }
 
-    // Function to list an NFT to a Dutch auction
+    /// @notice Function to list an NFT to a Dutch auction
+    /// @param nftContractAddress Address of the NFT contract
+    /// @param nftId TokenId of the NFT contract
+    /// @param initialPrice Initial price of the NFT
+    /// @param reducingRate The reducing rate per hour
+    /// @param salePeriod Sale period of the NFT
     function listToDutchAuction(
         address nftContractAddress,
         uint256 nftId,
@@ -303,7 +332,10 @@ contract Marketplace {
         );
     }
 
-    // Function to list an NFT for an offering sale
+    /// @notice Function to list an NFT for an offering sale
+    /// @param nftContractAddress Address of the NFT contract
+    /// @param nftId TokenId of the NFT contract
+    /// @param initialPrice Initial price of the NFT
     function listToOfferingSale(
         address nftContractAddress,
         uint256 nftId,
@@ -331,7 +363,10 @@ contract Marketplace {
         emit NewOfferingSaleListing(nftContractAddress, nftId, initialPrice);
     }
 
-    // Function to check the owner of an NFT
+    /// @notice Function to check the owner of an NFT
+    /// @param nftContractAddress Address of the NFT contract
+    /// @param nftId Id of the NFT contract
+    /// @return true if the owner is the sender, false otherwise
     function checkOwnerOfNFT(
         address nftContractAddress,
         uint256 nftId
@@ -340,7 +375,9 @@ contract Marketplace {
         return (checkAddress == msg.sender);
     }
 
-    // Function for a user to bid in an English auction
+    /// @notice Function for a user to bid in an English auction
+    /// @param id The list id of the English Auction
+    /// @param sendingValue Bid amount
     function makeBidToEnglishAuction(uint256 id, uint256 sendingValue) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
@@ -364,7 +401,8 @@ contract Marketplace {
         emit NewBidToEnglishAuction(id, sendingValue, currentWinner);
     }
 
-    // Function to withdraw funds from an English auction
+    /// @notice Function to withdraw funds from an English auction
+    /// @param id The list id of the English Auction
     function withdrawFromEnglishAuction(uint256 id) external {
         require(
             englishAuctions.length > id,
@@ -377,7 +415,9 @@ contract Marketplace {
         emit NewWithdrawFromEnglishAuction(id, msg.sender, amount);
     }
 
-    // Function to end an English auction
+    /// @notice Function to end an English auction
+    /// @param _nftAddress Address of the NFT contract
+    /// @param _nftId Id of the NFT contract
     function endEnglishAuction(address _nftAddress, uint256 _nftId) external {
         uint256 id;
         bool flg = false;
@@ -433,7 +473,9 @@ contract Marketplace {
         );
     }
 
-    // Function for a user to buy in a Dutch auction
+    /// @notice Function for a user to buy in a Dutch auction
+    /// @param id The list id of the Dutch Auction
+    /// @param sendingValue Bid amount
     function buyDutchAuction(uint256 id, uint256 sendingValue) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
@@ -471,7 +513,10 @@ contract Marketplace {
         );
     }
 
-    // Function to get the current price in a Dutch auction
+    /// @notice Function to get the current price in a Dutch auction
+    /// @param id The list id of the Dutch Auction
+    /// @return The current price in a Dutch auction of specified NFT
+
     function getDutchAuctionPrice(uint256 id) public view returns (uint256) {
         uint256 listedId = dutchAuction_listedNumber[id];
         uint256 duration = 3600;
@@ -481,7 +526,9 @@ contract Marketplace {
         return price;
     }
 
-    // Function for a user to bid in an offering sale
+    /// @notice Function for a user to bid in an offering sale
+    /// @param id The list id of the Offering Sale
+    /// @param sendingValue Bid amount
     function makeBidToOfferingSale(uint256 id, uint256 sendingValue) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
@@ -513,7 +560,8 @@ contract Marketplace {
         emit NewBidToOfferingSale(id, msg.sender, sendingValue);
     }
 
-    // Function to withdraw funds from an offering sale
+    /// @notice Function to withdraw funds from an offering sale
+    /// @param id The list id of the Offering Sale
     function withdrawFromOfferingSale(uint256 id) external {
         require(
             offeringSales.length > id,
@@ -529,7 +577,9 @@ contract Marketplace {
         emit NewWithdrawFromOfferingSale(id, msg.sender, amount);
     }
 
-    // Function to end an offering sale
+    /// @notice Function to end an offering sale
+    /// @param id The list id of the Offering Sale
+    /// @param buyer The address of the buyer
     function endOfferingSale(uint256 id, address buyer) external {
         require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
@@ -565,7 +615,9 @@ contract Marketplace {
         );
     }
 
-    // Function to cancel a listing
+    /// @notice Function to cancel a listing
+    /// @param _nftContractAddress The address of the NFT contract
+    /// @param _nftId The ID of the NFT
     function cancelListing(address _nftContractAddress, uint256 _nftId) external {
         require(
             checkOwnerOfNFT(_nftContractAddress, _nftId) == true,
@@ -598,22 +650,34 @@ contract Marketplace {
         emit CanceledListing(id, msg.sender);
     }
 
+    /// @notice Function to get the number of Listed NFTs
+    /// @return The number of Listed NFTs
     function getListedNumber() external view returns (uint256) {
         return listedNFTs.length;
     }
 
+    /// @notice Function to get the number of English Auctions
+    /// @return The number of English Auctions
     function getListedEnglishAuctionNumber() external view returns (uint256) {
         return englishAuctions.length;
     }
 
+    /// @notice Function to get the number of Dutch Auctions
+    /// @return The number of Dutch Auctions
     function getListedDutchAuctionNumber() external view returns (uint256) {
         return dutchAuctions.length;
     }
 
+    /// @notice Function to get the number of Offering Sales
+    /// @return The number of Offering Sales
     function getOfferingSaleAuctionNumber() external view returns (uint256) {
         return offeringSales.length;
     }
 
+    /// @notice Function to get withdraw balance for English Auction
+    /// @param id The id of the listed English Auction
+    /// @param to The address of the withdrawal account
+    /// @return The amount of withdraw for English Auction
     function withdrawBalanceForEnglishAuction(
         uint256 id,
         address to
@@ -621,6 +685,10 @@ contract Marketplace {
         return englishAuction_balancesForWithdraw[id][to];
     }
 
+    /// @notice Function to get withdraw balance for Offering Sale
+    /// @param id The id of the listed Offering Sale
+    /// @param to The address of the withdrawal account
+    /// @return The amount of withdraw for Offering Sale
     function withdrawBalanceForOfferingSale(
         uint256 id,
         address to

@@ -25,7 +25,7 @@ contract ContentNFT is ERC721Upgradeable {
     IERC20 public USDC_token; // USDC token contract
     mapping(uint256 => address) public creators; // Mapping to store the creator address for each NFT token ID
     mapping(uint256 => uint256) private loyaltyFee; // Mapping to store the loyalty fee percentage for each NFT token ID
-    mapping(uint256 => TransferHistory[]) public transferHistory; // Mapping to store transfer history
+    mapping(uint256 => TransferHistory[]) private transferHistory; // Mapping to store transfer history
     // Events
     event minted(
         address indexed from,
@@ -36,6 +36,15 @@ contract ContentNFT is ERC721Upgradeable {
     event LoyaltyFeeChanged(uint256 indexed tokenId, uint256 indexed newFee);
 
     /// @notice Function to initialize the NFT contract
+    /// @param _name Name of the NFT contract
+    /// @param _symbol Symbol of the NFT contract
+    /// @param _description Description of the NFT contract
+    /// @param _nftURI Path to the first NFT URI
+    /// @param _target Address of the target contract
+    /// @param _mintFee Fee required for minting
+    /// @param _burnFee Fee required for burning
+    /// @param _USDC Address of the USDC token contract
+    /// @param _marketplace Address of the marketplace contract
     function initialize(
         string memory _name,
         string memory _symbol,
@@ -119,7 +128,9 @@ contract ContentNFT is ERC721Upgradeable {
         tokenNumber++;
     }
 
-    // Function to get the token URI for a given token ID
+    /// @notice Function to get the token URI for a given token ID
+    /// @param _tokenId Token ID of the NFT token
+    /// @return Token URI
     function tokenURI(
         uint256 _tokenId
     ) public view override returns (string memory) {
@@ -167,14 +178,18 @@ contract ContentNFT is ERC721Upgradeable {
         );
     }
 
-    // Function to get the transfer history for a given token ID
+    /// @notice Function to get the transfer history for a given token ID
+    /// @param _tokenId Token ID of the NFT token
+    /// @return TransferHistory of the given token
     function getTransferHistory(
         uint256 _tokenId
     ) external view returns (TransferHistory[] memory) {
         return transferHistory[_tokenId];
     }
 
-    // Function to get the loyalty fee for a given token ID
+    /// @notice Function to get the loyalty fee for a given token ID
+    /// @param _tokenId Token ID of the NFT token
+    /// @return Percentage of the loyalty fee for the given token
     function getLoyaltyFee(uint256 _tokenId) external view returns (uint256) {
         return loyaltyFee[_tokenId];
     }

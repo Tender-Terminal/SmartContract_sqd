@@ -20,7 +20,7 @@ contract Factory {
     uint256 public mintFee; // Fee required for minting NFTs
     uint256 public burnFee; // Fee required for burning NFTs
     address public USDC; // Address of the USDC token contract
-    IERC20 public immutable USDC_token;
+    IERC20 public immutable USDC_token; // USDC token contract
     address[] public agencies; // Array to store addresses of agencies associated with the contract
     // Events
     event GroupCreated(
@@ -47,7 +47,14 @@ contract Factory {
         require(flg == true, "Only group can call this function");
         _;
     }
-    // Constructor to initialize contract variables
+    /// @notice Constructor to initialize contract variables
+    /// @param _implementGroup Address of the implementation contract for creating groups
+    /// @param _implementContent Context of the implementation contract for NFT Collection
+    /// @param _marketplace Address of the marketplace contract
+    /// @param _developmentTeam Address of the development team
+    /// @param _mintFee Fee required for minting NFTs
+    /// @param _burnFee Fee required for burning NFTs
+    /// @param _USDC Address of the USDC token contract
     constructor(
         address _implementGroup,
         address _implementContent,
@@ -74,19 +81,23 @@ contract Factory {
         USDC_token = IERC20(_USDC);
     }
 
-    // Function to create a new group
+    /// @notice Function to create a new group
+    /// @param name The name of the group
+    /// @param description The description of the group
+    /// @param members The members of the group
+    /// @param numConfirmationRequired The number of confirmations required for execution of a transaction in the group
     function createGroup(
         string memory name,
         string memory description,
-        address[] memory owners,
+        address[] memory members,
         uint256 numConfirmationRequired
     ) external {
-        require(owners.length > 0, "At least one owner is required");
+        require(members.length > 0, "At least one owner is required");
         address newDeployedAddress = Clones.clone(implementGroup);
         ICreatorGroup(newDeployedAddress).initialize(
             name,
             description,
-            owners,
+            members,
             numConfirmationRequired,
             marketplace,
             mintFee,
@@ -98,7 +109,12 @@ contract Factory {
         emit GroupCreated(msg.sender, name, description, newDeployedAddress);
     }
 
-    // Function to mint a new NFT
+    /// @notice Function to mint a new NFT
+    /// @param _nftURI The URI of the NFT
+    /// @param _name The name of the new collection
+    /// @param _symbol The symbol of the new collection
+    /// @param _description The description of the new collection
+    /// @return The address of the new collection
     function mintNew(
         string memory _nftURI,
         string memory _name,
@@ -127,12 +143,15 @@ contract Factory {
         return newDeployedAddress;
     }
 
-    // Function to get the address of a creator group at a specific index
+    /// @notice Function to get the address of a creator group at a specific index
+    /// @param id The id of the creator group
+    /// @return The address of the creator group
     function getCreatorGroupAddress(uint256 id) external view returns (address) {
         return Creators[id];
     }
 
-    // Function for the development team to withdraw funds
+    /// @notice Function for the development team to withdraw funds
+    /// @dev Only the development team can call this function
     function withdraw() external {
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint256 amount = IERC20(USDC).balanceOf(address(this));
@@ -142,6 +161,9 @@ contract Factory {
         emit WithdrawalFromDevelopmentTeam(msg.sender, amount);
     }
 
+    /// @notice Function for the development team to set the team score for revenue distribution of a creator group
+    /// @param id The ID of the creator group
+    /// @param score The team score for the creator group
     function setTeamScoreForCreatorGroup(
         uint256 id,
         uint256 score
