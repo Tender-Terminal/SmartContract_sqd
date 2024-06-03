@@ -87,7 +87,6 @@ contract Marketplace {
         uint256 time
     );
     event Withdrawal(address indexed withdrawer, uint256 indexed amount);
-    event DevelopmentTeamSet(address indexed _developmentTeam);
     event PercentForSellerSet(uint256 indexed _percentForSeller);
     event NewEnglishAuctionListing(
         address indexed _nftContractAddress,
@@ -181,14 +180,6 @@ contract Marketplace {
         for (uint256 i = 0; i < _members.length; i++) {
             balanceOfUser[_members[i]] += _values[i];
         }
-    }
-
-    /// @notice Function to set the development team address
-    /// @param _developmentTeam Address of the development team
-    /// @dev Only callable by the owner
-    function setDevelopmentTeam(address _developmentTeam) external onlyOwner {
-        developmentTeam = _developmentTeam;
-        emit DevelopmentTeamSet(developmentTeam);
     }
 
     /// @notice Function to set the percentage for seller
@@ -379,15 +370,16 @@ contract Marketplace {
     /// @param id The list id of the English Auction
     /// @param sendingValue Bid amount
     function makeBidToEnglishAuction(uint256 id, uint256 sendingValue) external {
-        require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             englishAuctions.length > id,
             "Not listed in the english auction list."
         );
         uint256 listedId = englishAuction_listedNumber[id];
+        require(cancelListingState[listedId] == false, "Listing Cancelled.");
+        uint256 expectEndTime = listedNFTs[listedId].startTime +
+        englishAuctions[id].salePeriod;
+        require(expectEndTime > block.timestamp, "Auction ended!");
         require(listedNFTs[listedId].endState == false, "Already sold out.");
-        // address contractAddress = listedNFTs[listedId].nftContractAddress;
-        // uint256 nftId = listedNFTs[listedId].nftId;
         uint256 price = englishAuctions[id].currentPrice;
         address currentWinner = englishAuctions[id].currentWinner;
         require(
@@ -398,7 +390,7 @@ contract Marketplace {
         englishAuction_balancesForWithdraw[id][currentWinner] += price;
         englishAuctions[id].currentPrice = sendingValue;
         englishAuctions[id].currentWinner = msg.sender;
-        emit NewBidToEnglishAuction(id, sendingValue, currentWinner);
+        emit NewBidToEnglishAuction(id, sendingValue, msg.sender);
     }
 
     /// @notice Function to withdraw funds from an English auction
@@ -433,17 +425,17 @@ contract Marketplace {
             }
         }
         require(flg, "Wrong nft");
-        require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             englishAuctions.length > id,
             "Not listed in the english auction list."
         );
         uint256 listedId = englishAuction_listedNumber[id];
+        require(cancelListingState[listedId] == false, "Listing Cancelled.");
         uint256 expectEndTime = listedNFTs[listedId].startTime +
             englishAuctions[id].salePeriod;
         require(expectEndTime < block.timestamp, "Auction is not ended!");
-        address contractAddress = listedNFTs[listedId].nftContractAddress;
-        uint256 nftId = listedNFTs[listedId].nftId;
+        address contractAddress = _nftAddress;
+        uint256 nftId = _nftId;
         uint256 price = englishAuctions[id].currentPrice;
         address currentOwner = listedNFTs[listedId].currentOwner;
         require(
@@ -477,13 +469,16 @@ contract Marketplace {
     /// @param id The list id of the Dutch Auction
     /// @param sendingValue Bid amount
     function buyDutchAuction(uint256 id, uint256 sendingValue) external {
-        require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             dutchAuctions.length > id,
             "Not listed in the dutch auction list."
         );
         uint256 listedId = dutchAuction_listedNumber[id];
+        require(cancelListingState[listedId] == false, "Listing Cancelled.");
         require(listedNFTs[listedId].endState == false, "Already sold out.");
+        uint256 expectEndTime = listedNFTs[listedId].startTime +
+        dutchAuctions[id].salePeriod;
+        require(expectEndTime > block.timestamp, "Auction ended!");
         address contractAddress = listedNFTs[listedId].nftContractAddress;
         uint256 nftId = listedNFTs[listedId].nftId;
         address currentOwner = listedNFTs[listedId].currentOwner;
@@ -530,12 +525,12 @@ contract Marketplace {
     /// @param id The list id of the Offering Sale
     /// @param sendingValue Bid amount
     function makeBidToOfferingSale(uint256 id, uint256 sendingValue) external {
-        require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             offeringSales.length > id,
             "Not listed in the offering sale list."
         );
         uint256 listedId = offeringSale_listedNumber[id];
+        require(cancelListingState[listedId] == false, "Listing Cancelled.");
         require(listedNFTs[listedId].endState == false, "Already sold out.");
         address contractAddress = listedNFTs[listedId].nftContractAddress;
         uint256 nftId = listedNFTs[listedId].nftId;
@@ -581,12 +576,12 @@ contract Marketplace {
     /// @param id The list id of the Offering Sale
     /// @param buyer The address of the buyer
     function endOfferingSale(uint256 id, address buyer) external {
-        require(cancelListingState[id] == false, "Listing Cancelled.");
         require(
             offeringSales.length > id,
             "Not listed in the offering sale list."
         );
         uint256 listedId = offeringSale_listedNumber[id];
+        require(cancelListingState[listedId] == false, "Listing Cancelled.");
         uint256 price = offeringSale_currentBids[id][buyer];
         require(price > 0, "Buyer doesn't have any bid.");
         address contractAddress = listedNFTs[listedId].nftContractAddress;
@@ -624,15 +619,18 @@ contract Marketplace {
             "only the nft owner can call this function"
         );
         uint256 id;
+        bool flag = false ;
         for (uint256 i = 0; i < listedNFTs.length; i++) {
             if (
                 listedNFTs[i].nftContractAddress == _nftContractAddress &&
                 listedNFTs[i].nftId == _nftId
             ) {
                 id = i;
+                flag = true ;
                 break;
             }
         }
+        require(flag == true, "Not listed yet");
         require(listedNFTs[id].endState == false, "Already sold out!");
         uint256 listId = listedNFTs[id].Id;
         require(

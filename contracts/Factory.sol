@@ -21,7 +21,6 @@ contract Factory {
     uint256 public burnFee; // Fee required for burning NFTs
     address public USDC; // Address of the USDC token contract
     IERC20 public immutable USDC_token; // USDC token contract
-    address[] public agencies; // Array to store addresses of agencies associated with the contract
     // Events
     event GroupCreated(
         address indexed creator,
@@ -149,7 +148,7 @@ contract Factory {
     function getCreatorGroupAddress(uint256 id) external view returns (address) {
         return Creators[id];
     }
-
+    
     /// @notice Function for the development team to withdraw funds
     /// @dev Only the development team can call this function
     function withdraw() external {
@@ -168,6 +167,8 @@ contract Factory {
         uint256 id,
         uint256 score
     ) external onlyOwner {
+        require(Creators.length > id, "Invalid creator group") ;
+        require(score >= 0 && score <= 100, "Invalid score") ;
         ICreatorGroup(Creators[id]).setTeamScore(score);
         emit TeamScoreChanged(Creators[id], score);
     }

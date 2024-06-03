@@ -1,7 +1,10 @@
 import { HardhatUserConfig } from "hardhat/config";
+import "dotenv/config";
+
 import "@nomicfoundation/hardhat-toolbox";
-const INFURA_API_KEY = "c4c5cc0e44b745e08e2056827b31ec05" ;
-const SEPOLIA_PRIVATE_KEY = "c04a2b08b8bafb4a72f1e006d3ddb38593de0c6a035129fc5c305fe64da754fe";
+
+const infuraKey = process.env.INFURA_API_KEY;
+const privateKey = process.env.PRIVATE_KEY?process.env.PRIVATE_KEY:"";
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
@@ -15,12 +18,12 @@ const config: HardhatUserConfig = {
   },
   networks:{
     sepolia:{
-      url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
-      accounts:[SEPOLIA_PRIVATE_KEY],
+      url: `https://sepolia.infura.io/v3/${infuraKey}`,
+      accounts:[privateKey],
     },
     mainnet:{
-      url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
-      accounts:[SEPOLIA_PRIVATE_KEY],
+      url: `https://mainnet.infura.io/v3/${infuraKey}`,
+      accounts:[privateKey],
     }
   },
   etherscan: {

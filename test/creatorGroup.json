@@ -984,7 +984,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "one",
+        "name": "_member",
         "type": "address"
       },
       {
@@ -1443,7 +1443,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "value",
+        "name": "_value",
         "type": "uint256"
       }
     ],
@@ -1540,7 +1540,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "tokenId",
+        "name": "_tokenId",
         "type": "uint256"
       },
       {

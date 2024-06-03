@@ -9,7 +9,6 @@ interface IMarketplace {
         address contractAddress,
         uint256 nftId
     ) external;
-    function setDevelopmentTeam(address _developmentTeam) external;
     function setPercentForSeller(uint256 _percentForSeller) external;
     function withdraw() external;
     function withdrawFromSeller() external;
