@@ -81,23 +81,24 @@ contract Factory {
     }
 
     /// @notice Function to create a new group
-    /// @param name The name of the group
-    /// @param description The description of the group
-    /// @param members The members of the group
-    /// @param numConfirmationRequired The number of confirmations required for execution of a transaction in the group
+    /// @param _name The name of the group
+    /// @param _description The description of the group
+    /// @param _members The members of the group
+    /// @param _numConfirmationRequired The number of confirmations required for execution of a transaction in the group
+
     function createGroup(
-        string memory name,
-        string memory description,
-        address[] memory members,
-        uint256 numConfirmationRequired
+        string memory _name,
+        string memory _description,
+        address[] memory _members,
+        uint256 _numConfirmationRequired
     ) external {
-        require(members.length > 0, "At least one owner is required");
+        require(_members.length > 0, "At least one owner is required");
         address newDeployedAddress = Clones.clone(implementGroup);
         ICreatorGroup(newDeployedAddress).initialize(
-            name,
-            description,
-            members,
-            numConfirmationRequired,
+            _name,
+            _description,
+            _members,
+            _numConfirmationRequired,
             marketplace,
             mintFee,
             burnFee,
@@ -105,7 +106,7 @@ contract Factory {
         );
         Creators.push(newDeployedAddress);
         numberOfCreators = Creators.length;
-        emit GroupCreated(msg.sender, name, description, newDeployedAddress);
+        emit GroupCreated(msg.sender, _name, _description, newDeployedAddress);
     }
 
     /// @notice Function to mint a new NFT
@@ -141,13 +142,6 @@ contract Factory {
         emit NewNFTMinted(msg.sender, newDeployedAddress);
         return newDeployedAddress;
     }
-
-    /// @notice Function to get the address of a creator group at a specific index
-    /// @param id The id of the creator group
-    /// @return The address of the creator group
-    function getCreatorGroupAddress(uint256 id) external view returns (address) {
-        return Creators[id];
-    }
     
     /// @notice Function for the development team to withdraw funds
     /// @dev Only the development team can call this function
@@ -160,16 +154,36 @@ contract Factory {
         emit WithdrawalFromDevelopmentTeam(msg.sender, amount);
     }
 
-    /// @notice Function for the development team to set the team score for revenue distribution of a creator group
-    /// @param id The ID of the creator group
-    /// @param score The team score for the creator group
+    /// @notice Function for the owner to set the team score for revenue distribution of a creator group
+    /// @param _id The ID of the creator group
+    /// @param _score The team score for the creator group
     function setTeamScoreForCreatorGroup(
-        uint256 id,
-        uint256 score
+        uint256 _id,
+        uint256 _score
     ) external onlyOwner {
-        require(Creators.length > id, "Invalid creator group") ;
-        require(score >= 0 && score <= 100, "Invalid score") ;
-        ICreatorGroup(Creators[id]).setTeamScore(score);
-        emit TeamScoreChanged(Creators[id], score);
+        require(Creators.length > _id, "Invalid creator group");
+        require(_score >= 0 && _score <= 100, "Invalid score");
+        ICreatorGroup(Creators[_id]).setTeamScore(_score);
+        emit TeamScoreChanged(Creators[_id], _score);
+    }
+
+    /// @notice Function to check if it is a creator group
+    /// @param _groupAddress The group address
+    /// @return The bool value if it is a creator group -> true, or not -> false
+    function isCreatorGroup(address _groupAddress) external view returns(bool){
+        bool flg = false;
+        for(uint256 i = 0; i < numberOfCreators; i++) {
+            if (_groupAddress == Creators[i]) {
+                flg = true; break;
+            }
+        }
+        return flg;
+    }
+
+    /// @notice Function to get the address of a creator group at a specific index
+    /// @param _id The ID of the creator group
+    /// @return The address of the creator group
+    function getCreatorGroupAddress(uint256 _id) external view returns (address) {
+        return Creators[_id];
     }
 }

@@ -510,12 +510,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "nftId",
+        "name": "_nftId",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "price",
+        "name": "_price",
         "type": "uint256"
       }
     ],
@@ -528,17 +528,17 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "contractAddress",
+        "name": "_nftContractAddress",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "nftId",
+        "name": "_nftId",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "price",
+        "name": "_price",
         "type": "uint256"
       }
     ],
@@ -583,7 +583,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "_id",
         "type": "uint256"
       }
     ],
@@ -596,12 +596,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "index",
+        "name": "_transactionId",
         "type": "uint256"
       },
       {
         "internalType": "bool",
-        "name": "state",
+        "name": "_state",
         "type": "bool"
       }
     ],
@@ -614,12 +614,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "index",
+        "name": "_transactionId",
         "type": "uint256"
       },
       {
         "internalType": "bool",
-        "name": "state",
+        "name": "_state",
         "type": "bool"
       }
     ],
@@ -632,12 +632,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "index",
+        "name": "_transactionId",
         "type": "uint256"
       },
       {
         "internalType": "bool",
-        "name": "state",
+        "name": "_state",
         "type": "bool"
       }
     ],
@@ -761,7 +761,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "_id",
         "type": "uint256"
       }
     ],
@@ -774,7 +774,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "index",
+        "name": "_transactionId",
         "type": "uint256"
       }
     ],
@@ -787,7 +787,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "index",
+        "name": "_transactionId",
         "type": "uint256"
       }
     ],
@@ -800,7 +800,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "index",
+        "name": "_transactionId",
         "type": "uint256"
       }
     ],
@@ -1124,22 +1124,22 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "_id",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "initialPrice",
+        "name": "_initialPrice",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "reducingRate",
+        "name": "_reducingRate",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "salePeriod",
+        "name": "_salePeriod",
         "type": "uint256"
       }
     ],
@@ -1152,17 +1152,17 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "_id",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "initialPrice",
+        "name": "_initialPrice",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "salePeriod",
+        "name": "_salePeriod",
         "type": "uint256"
       }
     ],
@@ -1175,12 +1175,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "_id",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "initialPrice",
+        "name": "_initialPrice",
         "type": "uint256"
       }
     ],
@@ -1249,7 +1249,7 @@
       },
       {
         "internalType": "address",
-        "name": "_targetNFT",
+        "name": "_targetCollection",
         "type": "address"
       }
     ],
@@ -1393,7 +1393,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_removeMember",
+        "name": "_oldMember",
         "type": "address"
       }
     ],
@@ -1430,7 +1430,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "confirmNumber",
+        "name": "_confirmNumber",
         "type": "uint256"
       }
     ],
@@ -1443,7 +1443,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_value",
+        "name": "_score",
         "type": "uint256"
       }
     ],
@@ -1504,7 +1504,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "_id",
         "type": "uint256"
       }
     ],
@@ -1676,12 +1676,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "contractAddress",
+        "name": "_nftContractAddress",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "tokenId",
+        "name": "_tokenId",
         "type": "uint256"
       }
     ],

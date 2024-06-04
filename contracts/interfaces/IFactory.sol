@@ -15,7 +15,8 @@ interface IFactory {
         string memory _symbol,
         string memory _description
     ) external returns (address);
-    function getCreatorGroupAddress(uint256 id) external view returns(address);
     function withdraw() external;
     function setTeamScoreForCreatorGroup(uint256 id, uint256 score) external;
+    function isCreatorGroup(address _groupAddress) external view returns(bool);
+    function getCreatorGroupAddress(uint256 id) external view returns(address);
 }
