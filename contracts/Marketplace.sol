@@ -369,7 +369,9 @@ contract Marketplace is ReentrancyGuard {
         IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
         if (IContentNFT(contractAddress).creators(nftId) == currentOwner)
             loyaltyFee = 0;
-        IERC20(USDC).approve(address(contractAddress), loyaltyFee);
+        if(loyaltyFee != 0) {
+            SafeERC20.forceApprove(USDC_token, contractAddress, loyaltyFee);
+        }
         IContentNFT(contractAddress).transferFrom(
             currentOwner,
             englishAuctions[id].currentWinner,
@@ -429,7 +431,9 @@ contract Marketplace is ReentrancyGuard {
         IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
         if (IContentNFT(contractAddress).creators(nftId) == currentOwner)
             loyaltyFee = 0;
-        IERC20(USDC).approve(address(contractAddress), loyaltyFee);
+        if(loyaltyFee != 0) {
+            SafeERC20.forceApprove(USDC_token, contractAddress, loyaltyFee);
+        }
         IContentNFT(contractAddress).transferFrom(
             currentOwner,
             msg.sender,
@@ -521,7 +525,9 @@ contract Marketplace is ReentrancyGuard {
         IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
         if (IContentNFT(contractAddress).creators(nftId) == msg.sender)
             loyaltyFee = 0;
-        IERC20(USDC).approve(address(contractAddress), loyaltyFee);
+        if(loyaltyFee != 0) {
+            SafeERC20.forceApprove(USDC_token, contractAddress, loyaltyFee);
+        }
         IContentNFT(contractAddress).transferFrom(msg.sender, _buyer, nftId);
         recordRevenue(msg.sender, price - loyaltyFee, contractAddress, nftId);
         listedNFTs[listedId].endState = true;

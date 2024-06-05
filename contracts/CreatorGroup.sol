@@ -242,7 +242,7 @@ contract CreatorGroup is Initializable, ICreatorGroup, ReentrancyGuard {
         string memory _description
     ) external onlyDirector {
         if (mintFee != 0) {
-            USDC_token.approve(factory, mintFee);
+            SafeERC20.forceApprove(USDC_token, factory, mintFee);
         }
         address nftAddress = IFactory(factory).mintNew(
             _nftURI,
@@ -269,7 +269,7 @@ contract CreatorGroup is Initializable, ICreatorGroup, ReentrancyGuard {
         address _targetCollection
     ) external onlyDirector {
         if (mintFee != 0) {
-            USDC_token.approve(_targetCollection, mintFee);
+            SafeERC20.forceApprove(USDC_token, _targetCollection, mintFee);
         }
         nftIdArr[numberOfNFT] = IContentNFT(_targetCollection).mint(_nftURI);
         nftAddressArr[numberOfNFT] = _targetCollection;
@@ -550,7 +550,7 @@ contract CreatorGroup is Initializable, ICreatorGroup, ReentrancyGuard {
         address nftAddress = nftAddressArr[id];
         uint256 tokenId = nftIdArr[id];
         if (burnFee != 0) {
-            USDC_token.approve(nftAddress, burnFee);
+            SafeERC20.forceApprove(USDC_token, nftAddress, burnFee);
         }
         uint256 burnedId = IContentNFT(nftAddress).burn(tokenId);
         require(burnedId == tokenId, "Not match burned ID");
@@ -610,7 +610,7 @@ contract CreatorGroup is Initializable, ICreatorGroup, ReentrancyGuard {
                 address(this),
                 _loyaltyFee
             );
-            USDC_token.approve(_nftContractAddress, _loyaltyFee);
+            SafeERC20.forceApprove(USDC_token, _nftContractAddress, _loyaltyFee);
         }
         IContentNFT(_nftContractAddress).transferFrom(
             msg.sender,
