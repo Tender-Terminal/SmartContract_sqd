@@ -9,8 +9,10 @@ import "./interfaces/IContentNFT.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract CreatorGroup is Initializable, ICreatorGroup {
+
+contract CreatorGroup is Initializable, ICreatorGroup, ReentrancyGuard {
     // Struct for transaction candidates
     struct transaction_candidate {
         address candidate;
@@ -20,8 +22,8 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     struct transaction_offering {
         uint256 marketId;
         uint256 id;
-        address buyer;
         uint256 price;
+        address buyer;
         bool endState;
     }
     // Struct for burn transactions
@@ -177,11 +179,13 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     ) external initializer {
         name = _name;
         description = _description;
-        for (uint256 i = 0; i < _members.length; i++) {
-            if (!isOwner[_members[i]]) members.push(_members[i]);
-            isOwner[_members[i]] = true;
+        for (uint256 i = 0; i < _members.length; ++i) {
+            if (!isOwner[_members[i]]) {
+                members.push(_members[i]);
+                isOwner[_members[i]] = true;
+            }
         }
-        numberOfMembers = _members.length;
+        numberOfMembers = members.length;
         require(
             _numConfirmationRequired <= numberOfMembers &&
                 _numConfirmationRequired >= 1,
@@ -218,7 +222,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         require(msg.sender == _oldMember, "Remove failed!");
         delete isOwner[_oldMember];
         uint256 id = 0;
-        for (uint256 i = 0; i < members.length; i++) {
+        for (uint256 i = 0; i < members.length; ++i) {
             if (members[i] == _oldMember) id = i;
         }
         members[id] = members[numberOfMembers - 1];
@@ -237,7 +241,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         string memory _symbol,
         string memory _description
     ) external onlyDirector {
-        if (mintFee > 0) {
+        if (mintFee != 0) {
             USDC_token.approve(factory, mintFee);
         }
         address nftAddress = IFactory(factory).mintNew(
@@ -249,7 +253,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         nftAddressArr[numberOfNFT] = nftAddress;
         nftIdArr[numberOfNFT] = 1;
         getNFTId[nftAddress][1] = numberOfNFT;
-        for (uint256 i = 0; i < members.length; i++) {
+        for (uint256 i = 0; i < members.length; ++i) {
             record_member memory tmp = record_member(members[i], 0, 0);
             Recording[numberOfNFT].push(tmp);
         }
@@ -264,13 +268,13 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         string memory _nftURI,
         address _targetCollection
     ) external onlyDirector {
-        if (mintFee > 0) {
+        if (mintFee != 0) {
             USDC_token.approve(_targetCollection, mintFee);
         }
         nftIdArr[numberOfNFT] = IContentNFT(_targetCollection).mint(_nftURI);
         nftAddressArr[numberOfNFT] = _targetCollection;
         getNFTId[_targetCollection][nftIdArr[numberOfNFT]] = numberOfNFT;
-        for (uint256 i = 0; i < members.length; i++) {
+        for (uint256 i = 0; i < members.length; ++i) {
             record_member memory tmp = record_member(members[i], 0, 0);
             Recording[numberOfNFT].push(tmp);
         }
@@ -287,7 +291,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 _initialPrice,
         uint256 _salePeriod
     ) external onlyDirector {
-        require(_id < numberOfNFT && _id >= 0, "NFT does not exist!");
+        require(_id <= numberOfNFT - 1 && _id >= 0, "NFT does not exist!");
         require(listedState[_id] == false, "Already listed!");
         listedState[_id] = true;
         IERC721(nftAddressArr[_id]).approve(marketplace, nftIdArr[_id]);
@@ -311,11 +315,11 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 _reducingRate,
         uint256 _salePeriod
     ) external onlyDirector {
-        require(_id < numberOfNFT && _id >= 0, "NFT does not exist!");
+        require(_id <= numberOfNFT - 1 && _id >= 0, "NFT does not exist!");
         require(listedState[_id] == false, "Already listed!");
         require(
             _initialPrice > _reducingRate * (_salePeriod / 3600),
-            "Input valid informations for Dutch Auction!"
+            "Invalid Dutch information!"
         );
         listedState[_id] = true;
         IERC721(nftAddressArr[_id]).approve(marketplace, nftIdArr[_id]);
@@ -336,7 +340,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 _id,
         uint256 _initialPrice
     ) external onlyDirector {
-        require(_id < numberOfNFT && _id >= 0, "NFT does not exist!");
+        require(_id <= numberOfNFT - 1 && _id >= 0, "NFT does not exist!");
         require(listedState[_id] == false, "Already listed!");
         listedState[_id] = true;
         IERC721(nftAddressArr[_id]).approve(marketplace, nftIdArr[_id]);
@@ -351,7 +355,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     /// @notice Function to cancel the listing of an NFT
     /// @param _id The id of the NFT in the group
     function cancelListing(uint256 _id) external onlyDirector {
-        require(_id < numberOfNFT && _id >= 0, "NFT does not exist!");
+        require(_id <= numberOfNFT - 1 && _id >= 0, "NFT does not exist!");
         require(listedState[_id] == true, "Not Listed!");
         IMarketplace(marketplace).cancelListing(
             nftAddressArr[_id],
@@ -363,7 +367,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     /// @notice Function to end an English auction
     /// @param _id The id of the NFT in the group
     function endEnglishAuction(uint256 _id) external onlyDirector {
-        require(_id < numberOfNFT && _id >= 0, "NFT does not exist!");
+        require(_id <= numberOfNFT - 1 && _id >= 0, "NFT does not exist!");
         require(listedState[_id] == true, "Not listed!");
         IMarketplace(marketplace).endEnglishAuction(
             nftAddressArr[_id],
@@ -388,7 +392,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 id = getNFTId[_tokenContractAddress][_tokenId];
         require(listedState[id] == true, "Not listed");
         transactions_offering.push(
-            transaction_offering(_marketId, id, _buyer, _price, false)
+            transaction_offering(_marketId, id, _price, _buyer, false)
         );
         emit OfferingSaleTransactionProposed(
             _tokenContractAddress,
@@ -406,7 +410,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         bool _state
     ) external onlyMembers {
         require(
-            _transactionId < transactions_offering.length &&
+            _transactionId <= transactions_offering.length - 1 &&
                 _transactionId >= 0,
             "Invalid transaction id"
         );
@@ -424,7 +428,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 _transactionId
     ) external onlyMembers {
         require(
-            _transactionId < transactions_offering.length &&
+            _transactionId <= transactions_offering.length - 1 &&
                 _transactionId >= 0,
             "Invalid transaction id"
         );
@@ -433,7 +437,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         );
         require(count >= numConfirmationRequired, "Not confirmed enough!!!");
         transactions_offering[_transactionId].endState = true;
-        for (uint256 i = 0; i < transactions_offering.length; i++) {
+        for (uint256 i = 0; i < transactions_offering.length; ++i) {
             if (
                 transactions_offering[i].id ==
                 transactions_offering[_transactionId].id
@@ -470,7 +474,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         bool _state
     ) external onlyMembers {
         require(
-            _transactionId < transactions_candidate.length &&
+            _transactionId <= transactions_candidate.length - 1 &&
                 _transactionId >= 0,
             "Invalid transaction id"
         );
@@ -484,7 +488,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 _transactionId
     ) external onlyMembers {
         require(
-            _transactionId < transactions_candidate.length &&
+            _transactionId <= transactions_candidate.length - 1 &&
                 _transactionId >= 0,
             "Invalid transaction id"
         );
@@ -500,7 +504,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     /// @notice Function to submit Burn Transaction
     /// @param _id The id of the NFT in the group
     function submitBurnTransaction(uint256 _id) external onlyMembers {
-        require(_id < numberOfNFT && _id >= 0, "NFT does not exist!");
+        require(_id <= numberOfNFT - 1 && _id >= 0, "NFT does not exist!");
         require(listedState[_id] == false, "Already listed");
         transactions_burn.push(transaction_burn(_id, false));
         emit BurnTransactionProposed(_id);
@@ -514,7 +518,8 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         bool _state
     ) external onlyMembers {
         require(
-            _transactionId < transactions_burn.length && _transactionId >= 0,
+            _transactionId <= transactions_burn.length - 1 &&
+                _transactionId >= 0,
             "Invalid transaction id"
         );
         confirmTransaction_Burn[msg.sender][_transactionId] = _state;
@@ -527,13 +532,14 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 _transactionId
     ) external onlyMembers {
         require(
-            _transactionId < transactions_burn.length && _transactionId >= 0,
+            _transactionId <= transactions_burn.length - 1 &&
+                _transactionId >= 0,
             "Invalid transaction id"
         );
         uint256 count = getConfirmNumberOfBurnTransaction(_transactionId);
         require(count >= numConfirmationRequired, "Not confirmed enough!!!");
         transactions_burn[_transactionId].endState = true;
-        for (uint256 i = 0; i < transactions_burn.length; i++) {
+        for (uint256 i = 0; i < transactions_burn.length; ++i) {
             if (
                 transactions_burn[i].id == transactions_burn[_transactionId].id
             ) {
@@ -543,7 +549,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 id = transactions_burn[_transactionId].id;
         address nftAddress = nftAddressArr[id];
         uint256 tokenId = nftIdArr[id];
-        if (burnFee > 0) {
+        if (burnFee != 0) {
             USDC_token.approve(nftAddress, burnFee);
         }
         uint256 burnedId = IContentNFT(nftAddress).burn(tokenId);
@@ -590,17 +596,22 @@ contract CreatorGroup is Initializable, ICreatorGroup {
             IContentNFT(_nftContractAddress).ownerOf(_tokenId) == msg.sender,
             "Not owner"
         );
-        require(getNFTId[_nftContractAddress][_tokenId] == 0, "Already uploaded");
+        require(
+            getNFTId[_nftContractAddress][_tokenId] == 0,
+            "Already uploaded"
+        );
         uint256 _loyaltyFee = IContentNFT(_nftContractAddress).getLoyaltyFee(
             _tokenId
         );
-        SafeERC20.safeTransferFrom(
-            USDC_token,
-            msg.sender,
-            address(this),
-            _loyaltyFee
-        );
-        USDC_token.approve(_nftContractAddress, _loyaltyFee);
+        if (_loyaltyFee != 0) {
+            SafeERC20.safeTransferFrom(
+                USDC_token,
+                msg.sender,
+                address(this),
+                _loyaltyFee
+            );
+            USDC_token.approve(_nftContractAddress, _loyaltyFee);
+        }
         IContentNFT(_nftContractAddress).transferFrom(
             msg.sender,
             address(this),
@@ -624,7 +635,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
             "Invalid Alarm!"
         );
         uint256 id = getNFTId[msg.sender][_nftId];
-        require(id < numberOfNFT && id >= 0, "NFT does not exist!");
+        require(id <= numberOfNFT - 1 && id >= 0, "NFT does not exist!");
         require(listedState[id] == true, "Not listed");
         eachDistribution(id, _price);
         emit LoyaltyFeeReceived(id, _price);
@@ -643,19 +654,19 @@ contract CreatorGroup is Initializable, ICreatorGroup {
             IContentNFT(_nftContractAddress).creators(_nftId) == address(this),
             "Invalid Alarm!"
         );
-     uint256 id = getNFTId[_nftContractAddress][_nftId];
-        require(id < numberOfNFT && id >= 0, "NFT does not exist!");
+        uint256 id = getNFTId[_nftContractAddress][_nftId];
+        require(id <= numberOfNFT - 1 && id >= 0, "NFT does not exist!");
         require(listedState[id] == true, "Not listed");
         record_member[] memory temp = Recording[id];
         uint256 sum = 0;
-        for (uint256 i = 0; i < temp.length; i++) {
+        for (uint256 i = 0; i < temp.length; ++i) {
             uint256 value = IMarketplace(marketplace).getBalanceOfUser(
                 temp[i]._member
             );
             Recording[id][i]._percent = value;
             sum += value;
         }
-        for (uint256 i = 0; i < temp.length; i++) {
+        for (uint256 i = 0; i < temp.length; ++i) {
             Recording[id][i]._sum = sum;
         }
         soldOutState[id] = true;
@@ -666,7 +677,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function withdrawFromMarketplace() external onlyDirector {
         IMarketplace(marketplace).withdrawFromSeller();
         uint256 startNumber = currentDistributeNumber;
-        for (uint256 i = startNumber; i < soldInformation.length; i++) {
+        for (uint256 i = startNumber; i < soldInformation.length; ++i) {
             if (!soldInformation[i].distributeState)
                 eachDistribution(
                     soldInformation[i].id,
@@ -679,14 +690,13 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     }
 
     /// @notice Function to withdraw funds from the contract
-    function withdraw() external onlyMembers {
+    function withdraw() external onlyMembers nonReentrant {
         uint256 balanceToWithdraw = balance[msg.sender];
-        require(balanceToWithdraw > 0, "No balance to withdraw");
+        require(balanceToWithdraw != 0, "No balance to withdraw");
         balance[msg.sender] = 0;
         SafeERC20.safeTransfer(USDC_token, msg.sender, balanceToWithdraw);
         emit WithdrawHappened(msg.sender, balanceToWithdraw);
     }
-
 
     /// @notice Function to distribute revenue from sold NFTs
     /// @param _id NFT id in the group
@@ -694,21 +704,22 @@ contract CreatorGroup is Initializable, ICreatorGroup {
     function eachDistribution(uint256 _id, uint256 _value) internal {
         totalEarning += _value;
         uint256 count = Recording[_id].length;
-        require(count > 0, "No members to distribute");
+        require(count != 0, "No members to distribute");
         uint256 eachTeamScore = ((_value * teamScore) / 100) / count;
         uint256 remainingValue = _value - eachTeamScore * count;
         uint256[] memory _revenues = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
+        for (uint256 i = 0; i < count; ++i) {
             _revenues[i] += eachTeamScore;
             if (Recording[_id][i]._sum == 0) {
                 _revenues[i] += remainingValue / count;
             } else {
-                _revenues[i] += (remainingValue * Recording[_id][i]._percent) /
+                _revenues[i] +=
+                    (remainingValue * Recording[_id][i]._percent) /
                     Recording[_id][i]._sum;
             }
         }
         address[] memory _members = new address[](count);
-        for (uint256 i = 0; i < count; i++) {
+        for (uint256 i = 0; i < count; ++i) {
             address tmp_address = Recording[_id][i]._member;
             revenueDistribution[tmp_address][_id] += _revenues[i];
             _members[i] = tmp_address;
@@ -729,7 +740,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 index
     ) public view returns (uint256) {
         uint256 count = 0;
-        for (uint256 i = 0; i < numberOfMembers; i++) {
+        for (uint256 i = 0; i < numberOfMembers; ++i) {
             if (confirmTransaction_Candidate[members[i]][index] == true) {
                 count++;
             }
@@ -744,7 +755,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 index
     ) public view returns (uint256) {
         uint256 count = 0;
-        for (uint256 i = 0; i < numberOfMembers; i++) {
+        for (uint256 i = 0; i < numberOfMembers; ++i) {
             if (confirmTransaction_Offering[members[i]][index] == true) {
                 count++;
             }
@@ -759,7 +770,7 @@ contract CreatorGroup is Initializable, ICreatorGroup {
         uint256 index
     ) public view returns (uint256) {
         uint256 count = 0;
-        for (uint256 i = 0; i < numberOfMembers; i++) {
+        for (uint256 i = 0; i < numberOfMembers; ++i) {
             if (confirmTransaction_Burn[members[i]][index] == true) {
                 count++;
             }

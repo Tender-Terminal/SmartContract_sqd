@@ -6,8 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ICreatorGroup.sol";
 import "./interfaces/IContentNFT.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract Marketplace {
+contract Marketplace is ReentrancyGuard {
     // Enum defining different sale types
     enum SaleType {
         ENGLISH_AUCTION,
@@ -137,7 +138,7 @@ contract Marketplace {
         owner = msg.sender;
         require(_developmentTeam!= address(0), "Invalid address");
         developmentTeam = _developmentTeam;
-        require(_percentForSeller <= 100 && _percentForSeller > 0, "Invalid percentage");
+        require(_percentForSeller <= 100 && _percentForSeller != 0, "Invalid percentage");
         percentForSeller = _percentForSeller;
         balanceOfDevelopmentTeam = 0;
          require(_USDC!= address(0), "Invalid address");
@@ -301,7 +302,7 @@ contract Marketplace {
             _sendingValue > price,
             "You should send a price that is more than current price."
         );
-        if(_sendingValue > 0) SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), _sendingValue) ;
+        if(_sendingValue != 0) SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), _sendingValue) ;
         englishAuction_balancesForWithdraw[_id][currentWinner] += price;
         englishAuctions[_id].currentPrice = _sendingValue;
         englishAuctions[_id].currentWinner = msg.sender;
@@ -310,13 +311,13 @@ contract Marketplace {
 
     /// @notice Function to withdraw funds from an English auction
     /// @param _id The list id of the English Auction
-    function withdrawFromEnglishAuction(uint256 _id) external {
+    function withdrawFromEnglishAuction(uint256 _id) external nonReentrant {
         require(
             englishAuctions.length > _id && _id >= 0,
             "Not listed in the english auction list."
         );
         uint256 amount = englishAuction_balancesForWithdraw[_id][msg.sender];
-        require(amount > 0, "You don't have any balance.");
+        require(amount != 0, "You don't have any balance.");
         englishAuction_balancesForWithdraw[_id][msg.sender] = 0;
         SafeERC20.safeTransfer(USDC_token, msg.sender, amount);
         emit NewWithdrawFromEnglishAuction(_id, msg.sender, amount);
@@ -328,7 +329,7 @@ contract Marketplace {
     function endEnglishAuction(address _nftContractAddress, uint256 _nftId) external {
         uint256 id;
         bool flg = false;
-        for (uint256 i = 0; i < englishAuctions.length; i++) {
+        for (uint256 i = 0; i < englishAuctions.length; ++i) {
             uint256 tmp_Id = englishAuction_listedNumber[i];
             if (
                 listedNFTs[tmp_Id].nftContractAddress == _nftContractAddress &&
@@ -421,7 +422,7 @@ contract Marketplace {
         address currentOwner = listedNFTs[listedId].currentOwner;
         uint256 price = getDutchAuctionPrice(_id);
         require(_sendingValue == price, "Not exact fee");
-        if(_sendingValue > 0) SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), _sendingValue);
+        if(_sendingValue != 0) SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), _sendingValue);
         uint256 loyaltyFee;
         loyaltyFee = (price * percentForLoyaltyFee) / 100;
         IContentNFT(contractAddress).setLoyaltyFee(nftId, loyaltyFee);
@@ -465,7 +466,7 @@ contract Marketplace {
             "You should send a price that is more than current price."
         );
         offeringSales[_id].bidNumber++;
-        if(_sendingValue > 0) SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), _sendingValue);
+        if(_sendingValue != 0) SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), _sendingValue);
         offeringSale_currentBids[_id][msg.sender] = _sendingValue;
         offeringSale_balancesForWithdraw[_id][msg.sender] += _sendingValue;
         // call the CreatorGroup's function
@@ -481,7 +482,7 @@ contract Marketplace {
 
     /// @notice Function to withdraw funds from an offering sale
     /// @param _id The list id of the Offering Sale
-    function withdrawFromOfferingSale(uint256 _id) external {
+    function withdrawFromOfferingSale(uint256 _id) external nonReentrant{
         require(
             offeringSales.length > _id && _id >= 0,
             "Not listed in the offering sale list."
@@ -489,9 +490,9 @@ contract Marketplace {
         uint256 listedId = offeringSale_listedNumber[_id];
         require(listedNFTs[listedId].endState == true, "Not finished yet");
         uint256 amount = offeringSale_balancesForWithdraw[_id][msg.sender];
-        require(amount > 0, "You don't have any balance.");
+        require(amount != 0, "You don't have any balance.");
         offeringSale_balancesForWithdraw[_id][msg.sender] = 0;
-        if(amount > 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
+        if(amount != 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         emit NewWithdrawFromOfferingSale(_id, msg.sender, amount);
     }
 
@@ -507,7 +508,7 @@ contract Marketplace {
         require(cancelListingState[listedId] == false, "Listing Cancelled.");
         require(listedNFTs[listedId].endState == false, "Already sold out!");
         uint256 price = offeringSale_currentBids[_id][_buyer];
-        require(price > 0, "Buyer doesn't have any bid.");
+        require(price != 0, "Buyer doesn't have any bid.");
         address contractAddress = listedNFTs[listedId].nftContractAddress;
         uint256 nftId = listedNFTs[listedId].nftId;
         require(
@@ -544,7 +545,7 @@ contract Marketplace {
         );
         uint256 id;
         bool flag = false ;
-        for (uint256 i = 0; i < listedNFTs.length; i++) {
+        for (uint256 i = 0; i < listedNFTs.length; ++i) {
             if (
                 listedNFTs[i].nftContractAddress == _nftContractAddress &&
                 listedNFTs[i].nftId == _nftId
@@ -565,7 +566,7 @@ contract Marketplace {
         );
         require(
             !(listedNFTs[id]._saleType == SaleType.OFFERING_SALE &&
-                offeringSales[listId].bidNumber > 0),
+                offeringSales[listId].bidNumber != 0),
             "Already sale offering started!"
         );
         cancelListingState[id] = true;
@@ -584,7 +585,7 @@ contract Marketplace {
         uint256 _nftId
     ) external {
         bool flag = false;
-        for (uint256 i = 0; i < listedNFTs.length; i++) {
+        for (uint256 i = 0; i < listedNFTs.length; ++i) {
             if (
                 listedNFTs[i].nftContractAddress == _nftContractAddress &&
                 listedNFTs[i].nftId == _nftId &&
@@ -596,7 +597,7 @@ contract Marketplace {
             }
         }
         require(flag == true, "Invalid address for adding revenue");
-        for (uint256 i = 0; i < _members.length; i++) {
+        for (uint256 i = 0; i < _members.length; ++i) {
             balanceOfUser[_members[i]] += _values[i];
         }
     }
@@ -620,20 +621,20 @@ contract Marketplace {
     }
 
     /// @notice Function to withdraw funds from the contract
-    function withdraw() external {
+    function withdraw() external nonReentrant{
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint amount = balanceOfDevelopmentTeam;
         balanceOfDevelopmentTeam = 0;
-        if(amount > 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
+        if(amount != 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         emit Withdrawal(msg.sender, amount);
     }
 
     /// @notice Function to withdraw funds from a seller's balance
-    function withdrawFromSeller() external {
-        require(balanceOfSeller[msg.sender] > 0, "Invalid withdrawer");
+    function withdrawFromSeller() external nonReentrant{
+        require(balanceOfSeller[msg.sender] != 0, "Invalid withdrawer");
         uint amount = balanceOfSeller[msg.sender];
         balanceOfSeller[msg.sender] = 0;
-        if(amount > 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
+        if(amount != 0) SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         emit Withdrawal(msg.sender, amount);
     }
     /// @notice Function to get the balance of a specific user

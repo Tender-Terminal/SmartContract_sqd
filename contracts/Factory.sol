@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "./interfaces/ICreatorGroup.sol";
 import "./interfaces/IContentNFT.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -38,7 +37,7 @@ contract Factory {
     }
     modifier onlyGroup() {
         bool flg = false;
-        for(uint256 i = 0; i < numberOfCreators; i++) {
+        for(uint256 i = 0; i < numberOfCreators; ++i) {
             if (msg.sender == Creators[i]) {
                 flg = true; break;
             }
@@ -62,20 +61,20 @@ contract Factory {
         uint256 _mintFee,
         uint256 _burnFee,
         address _USDC
-    ) {
+    ) payable {
         owner = msg.sender;
-        require(_marketplace!= address(0), "marketplace address cannot be 0");
+        require(_marketplace!= address(0), "Address cannot be 0");
         marketplace = _marketplace;
-        require(_developmentTeam!= address(0), "development team address cannot be 0");
+        require(_developmentTeam!= address(0), "Address cannot be 0");
         developmentTeam = _developmentTeam;
         numberOfCreators = 0;
         mintFee = _mintFee;
         burnFee = _burnFee;
-        require(_implementGroup != address(0), "group implementation address cannot be 0");
+        require(_implementGroup != address(0), "Address cannot be 0");
         implementGroup = _implementGroup;
-        require(_implementContent!= address(0), "content implementation address cannot be 0");
+        require(_implementContent!= address(0), "Address cannot be 0");
         implementContent = _implementContent;
-        require(_USDC != address(0), "USDC address cannot be 0");
+        require(_USDC != address(0), "Address cannot be 0");
         USDC = _USDC;
         USDC_token = IERC20(_USDC);
     }
@@ -92,7 +91,7 @@ contract Factory {
         address[] memory _members,
         uint256 _numConfirmationRequired
     ) external {
-        require(_members.length > 0, "At least one owner is required");
+        require(_members.length != 0, "At least one owner is required");
         address newDeployedAddress = Clones.clone(implementGroup);
         ICreatorGroup(newDeployedAddress).initialize(
             _name,
@@ -122,7 +121,7 @@ contract Factory {
         string memory _description
     ) external onlyGroup returns (address) {
         uint256 beforeBalance = USDC_token.balanceOf(address(this));
-        if(mintFee > 0) {
+        if(mintFee != 0) {
             SafeERC20.safeTransferFrom(USDC_token, msg.sender, address(this), mintFee);
         }
         uint256 afterBalance = USDC_token.balanceOf(address(this));
@@ -148,7 +147,7 @@ contract Factory {
     function withdraw() external {
         require(msg.sender == developmentTeam, "Invalid withdrawer");
         uint256 amount = IERC20(USDC).balanceOf(address(this));
-        if(amount > 0) {
+        if(amount != 0) {
             SafeERC20.safeTransfer(USDC_token, msg.sender, amount) ;
         }
         emit WithdrawalFromDevelopmentTeam(msg.sender, amount);
@@ -172,7 +171,7 @@ contract Factory {
     /// @return The bool value if it is a creator group -> true, or not -> false
     function isCreatorGroup(address _groupAddress) external view returns(bool){
         bool flg = false;
-        for(uint256 i = 0; i < numberOfCreators; i++) {
+        for(uint256 i = 0; i < numberOfCreators; ++i) {
             if (_groupAddress == Creators[i]) {
                 flg = true; break;
             }

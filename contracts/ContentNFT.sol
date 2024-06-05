@@ -86,7 +86,7 @@ contract ContentNFT is ERC721Upgradeable {
     function mint(string memory _nftURI) external payable returns (uint256) {
         require(IFactory(factory).isCreatorGroup(msg.sender) == true, "Invalid Minter");
         // Mint the NFT token
-        if (mintFee > 0) {
+        if (mintFee != 0) {
             SafeERC20.safeTransferFrom(
                 USDC_token,
                 msg.sender,
@@ -110,7 +110,7 @@ contract ContentNFT is ERC721Upgradeable {
     function burn(uint256 _tokenId) external payable returns (uint256) {
         require(msg.sender == ownerOf(_tokenId), "only owner can burn");
         // Burn the NFT token
-        if (burnFee > 0) {
+        if (burnFee != 0) {
             SafeERC20.safeTransferFrom(
                 USDC_token,
                 msg.sender,
@@ -136,7 +136,7 @@ contract ContentNFT is ERC721Upgradeable {
     function setLoyaltyFee(uint256 _tokenId, uint256 _loyaltyFee) external {
         require(
             msg.sender == marketplace,
-            "Only Marketplace can set Loyalty Fee."
+            "Invalid caller."
         );
         loyaltyFee[_tokenId] = _loyaltyFee;
         emit LoyaltyFeeChanged(_tokenId, _loyaltyFee);
@@ -152,12 +152,12 @@ contract ContentNFT is ERC721Upgradeable {
         uint256 _tokenId
     ) public override {
         super.transferFrom(_from, _to, _tokenId);
-        if (transferHistory[_tokenId].length > 1) {
+        if (transferHistory[_tokenId].length >= 2) {
             ICreatorGroup(creators[_tokenId]).alarmLoyaltyFeeReceived(
                 _tokenId,
                 loyaltyFee[_tokenId]
             );
-            if (loyaltyFee[_tokenId] > 0) {
+            if (loyaltyFee[_tokenId] != 0) {
                 SafeERC20.safeTransferFrom(
                     USDC_token,
                     msg.sender,
